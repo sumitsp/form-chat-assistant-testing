@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from io import BytesIO
+import json
 import re
 from typing import Any
 
@@ -86,6 +88,10 @@ def batch_frontend_html() -> str:
         <button id="runBtn" type="submit">Run and Download PDF</button>
       </div>
     </form>
+    <div class="row" id="downloadsRow" style="display:none;">
+      <a class="linkbtn" id="downloadPdfBtn" href="#">Download PDF</a>
+      <a class="linkbtn" id="downloadJsonBtn" href="#">Download JSON</a>
+    </div>
     <div id="status"></div>
     <p class="help">Template headers use API keys (for example <code>occupancy</code>, <code>loanAmount</code>, <code>state</code>, <code>documentationType</code>). Common form-question labels are also accepted.</p>
   </div>
@@ -95,6 +101,9 @@ def batch_frontend_html() -> str:
     const input = document.getElementById("xlsx");
     const runBtn = document.getElementById("runBtn");
     const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+    const downloadsRow = document.getElementById("downloadsRow");
+    const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
     const status = document.getElementById("status");
     let inFlight = false;
     let requestController = null;
@@ -131,11 +140,12 @@ def batch_frontend_html() -> str:
         if (requestController) requestController.abort();
       }, 120000);
       setBusy(true);
+      downloadsRow.style.display = "none";
       status.textContent = "Running scenarios... this may take a moment.";
       const fd = new FormData();
       fd.append("file", file);
       try {
-        const res = await fetch("/api/batch/report", {
+        const res = await fetch("/api/batch/run", {
           method: "POST",
           body: fd,
           signal: requestController.signal,
@@ -144,14 +154,13 @@ def batch_frontend_html() -> str:
           const txt = await res.text();
           throw new Error(txt || ("Request failed with status " + res.status));
         }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "mortgage-batch-report.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
-        status.textContent = "Done. PDF downloaded.";
+        const data = await res.json();
+        downloadPdfBtn.href = data.pdf_download_url;
+        downloadPdfBtn.download = "mortgage-batch-report.pdf";
+        downloadJsonBtn.href = data.json_download_url;
+        downloadJsonBtn.download = "eligibility_batch_test_api_contract.json";
+        downloadsRow.style.display = "flex";
+        status.textContent = "Done. Use the download buttons.";
       } catch (err) {
         if (err?.name === "AbortError") {
           status.textContent = "Timed out or cancelled. Please try again.";
@@ -488,10 +497,14 @@ def _cell_to_text(value: Any) -> str:
 class _ScenarioRun:
     scenario_no: int
     scenario_name: str
+    form_payload: dict[str, str]
+    total_programs_evaluated: int
     input_rows: list[tuple[str, str]]
     eligible_rows: list[tuple[str, str, str]]
     loanpass_rows: list[tuple[str, str]]
     failed_rows: list[tuple[str, str, str]]
+    matched_programs_contract: list[dict[str, Any]]
+    rejected_programs_contract: list[dict[str, Any]]
 
 
 def _parse_excel_rows(
@@ -557,6 +570,68 @@ def _parse_excel_rows(
     return scenarios
 
 
+def _categorize_rejection(layer: str, reason: str) -> str:
+    text = f"{layer} {reason}".lower()
+    if "citizenship" in text or "itin" in text or "foreign national" in text:
+        return "citizenship_mismatch"
+    if "second-lien" in text or "lien" in text:
+        return "lien_position_mismatch"
+    if "dscr" in text and "income" in text:
+        return "dscr_program_with_income_doc"
+    if "below" in text and "loan" in text:
+        return "loan_amount_below_minimum"
+    if "above" in text and "loan" in text:
+        return "loan_amount_above_maximum"
+    if "ltv" in text:
+        return "ltv_above_program_cap"
+    if "cltv" in text:
+        return "cltv_above_program_cap"
+    if "fico" in text:
+        return "fico_below_floor"
+    if "property type" in text:
+        return "property_type_not_allowed"
+    if "occupancy" in text:
+        return "occupancy_not_allowed"
+    if "loan purpose" in text:
+        return "loan_purpose_not_allowed"
+    if "state" in text:
+        return "state_ineligibility"
+    if "county" in text:
+        return "county_ineligibility"
+    if "city" in text:
+        return "city_ineligibility"
+    if "zip" in text:
+        return "zip_ineligibility"
+    if "seasoning" in text or "credit event" in text:
+        return "credit_event_seasoning_insufficient"
+    if "overlay" in text:
+        return "geo_overlay_disqualifies"
+    return "geo_overlay_disqualifies"
+
+
+def _rule_id_from_layer(layer: str) -> str:
+    low = (layer or "").lower()
+    if "layer 1" in low:
+        return "program.gate"
+    if "layer 2" in low:
+        return "program.matrix"
+    if "layer 3" in low:
+        return "program.fthb"
+    if "layer 4" in low:
+        return "program.products"
+    if "layer 5" in low:
+        return "program.geo"
+    if "layer 6" in low:
+        return "program.credit"
+    if "layer 7" in low:
+        return "program.housing_history"
+    if "layer 8" in low:
+        return "program.guidelines"
+    if "layer 10" in low:
+        return "program.verify"
+    return "program.rule"
+
+
 def _run_scenario(
     scenario_no: int,
     scenario_name: str,
@@ -568,9 +643,13 @@ def _run_scenario(
     # This avoids the very slow full-mode RAG/Qdrant layers that can hang for minutes.
     result = find_eligible_programs(form_payload, quick=True, collect_trace=True)
     eligible = result.get("eligible") or []
+    total_programs_evaluated = len((result.get("program_trace") or {}).get("programs") or []) or int(
+        result.get("total_screened") or 0
+    )
 
     eligible_rows: list[tuple[str, str, str]] = []
     loanpass_rows: list[tuple[str, str]] = []
+    matched_contract: list[dict[str, Any]] = []
 
     for prog in eligible:
         program_name = str(prog.get("program_name_np") or prog.get("program_name") or "").strip()
@@ -587,8 +666,12 @@ def _run_scenario(
         if pid is None:
             continue
 
+        product_items: list[dict[str, Any]] = []
+        loanpass_pass = False
+        loanpass_note: str | None = None
         try:
             product_names = loanpass_products_cache.get(pid)
+            lp_products: list[dict[str, Any]] | None = None
             if product_names is None:
                 lp = list_program_products(
                     form_payload,
@@ -596,39 +679,110 @@ def _run_scenario(
                     program_name=program_name or None,
                     investor_name=investor_name or None,
                 )
+                lp_products = lp.get("products") or []
                 names = [
                     str((p or {}).get("product_name") or "").strip()
-                    for p in (lp.get("products") or [])
+                    for p in lp_products
                 ]
                 product_names = [p for p in names if p]
                 loanpass_products_cache[pid] = product_names
+            else:
+                lp_products = None
             if product_names:
                 loanpass_rows.append((program_name or "-", ", ".join(product_names)))
+                loanpass_pass = True
+            if lp_products:
+                for item in lp_products:
+                    name = str((item or {}).get("product_name") or "").strip()
+                    if not name:
+                        continue
+                    lp_id = str((item or {}).get("loanpass_product_id") or "").strip()
+                    product_items.append(
+                        {
+                            "product_type_id": (item or {}).get("product_type_id"),
+                            "name": name,
+                            "loanpass_product_ids": [lp_id] if lp_id else [],
+                        }
+                    )
         except Exception:
             # Keep report generation resilient: eligibility output is still useful even if
             # LoanPASS has a transient outage or missing mapping for some programs.
-            continue
+            loanpass_note = "LoanPASS lookup failed for this program in current run."
+
+        if not product_items:
+            # Fallback from internal eligibility product list when LoanPASS mapping isn't available.
+            for name in products:
+                product_items.append(
+                    {
+                        "product_type_id": None,
+                        "name": name,
+                        "loanpass_product_ids": [],
+                    }
+                )
+
+        matched_item = {
+            "program_id": pid,
+            "program_name": str(prog.get("program_name") or ""),
+            "program_name_np": program_name,
+            "lender": {
+                "id": None,
+                "brand_name": investor_name,
+                "lender_name": investor_name,
+            },
+            "is_dscr_program": bool(prog.get("is_dscr")),
+            "eligible_products": product_items,
+            "loanpass_pass": loanpass_pass,
+        }
+        if (not loanpass_pass) and loanpass_note:
+            matched_item["loanpass_pass_note"] = loanpass_note
+        elif not loanpass_pass:
+            matched_item["loanpass_pass_note"] = (
+                "Program not exposed via LoanPASS - eligibility from internal engine only"
+            )
+        matched_contract.append(matched_item)
 
     failed_rows: list[tuple[str, str, str]] = []
+    rejected_contract: list[dict[str, Any]] = []
     trace_data = result.get("program_trace")
     if isinstance(trace_data, dict):
         rejected = rejected_programs_from_trace(trace_data)
         for item in rejected:
+            pretty_reason = humanize_reject_reason(item.layer or "", item.reason or "")
+            if " - " in item.program_title:
+                lender_label, program_label = item.program_title.split(" - ", 1)
+            elif " — " in item.program_title:
+                lender_label, program_label = item.program_title.split(" — ", 1)
+            else:
+                lender_label, program_label = "", item.program_title
             failed_rows.append(
                 (
                     item.program_title or f"Program {item.program_id}",
                     item.layer or "-",
-                    humanize_reject_reason(item.layer or "", item.reason or ""),
+                    pretty_reason,
                 )
+            )
+            rejected_contract.append(
+                {
+                    "program_id": item.program_id,
+                    "lender": lender_label,
+                    "program_name_np": program_label,
+                    "rejection_category": _categorize_rejection(item.layer or "", item.reason or ""),
+                    "rejection_reason": pretty_reason,
+                    "rule_id": _rule_id_from_layer(item.layer or ""),
+                }
             )
 
     return _ScenarioRun(
         scenario_no=scenario_no,
         scenario_name=scenario_name,
+        form_payload=form_payload,
+        total_programs_evaluated=total_programs_evaluated,
         input_rows=input_rows,
         eligible_rows=eligible_rows,
         loanpass_rows=loanpass_rows,
         failed_rows=failed_rows,
+        matched_programs_contract=matched_contract,
+        rejected_programs_contract=rejected_contract,
     )
 
 
@@ -777,13 +931,56 @@ def _add_section_title(doc: fitz.Document, page: fitz.Page, y: float, text: str)
     return page, y + 16
 
 
-def build_batch_report_pdf_bytes(xlsx_bytes: bytes) -> bytes:
+def _execute_batch_runs(xlsx_bytes: bytes) -> list[_ScenarioRun]:
     parsed = _parse_excel_rows(xlsx_bytes)
     loanpass_products_cache: dict[int, list[str]] = {}
-    scenario_runs = [
+    return [
         _run_scenario(num, name, payload, inputs, loanpass_products_cache)
         for num, name, payload, inputs in parsed
     ]
+
+
+def _build_contract_from_runs(scenario_runs: list[_ScenarioRun]) -> dict[str, Any]:
+    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    contract: dict[str, Any] = {
+        "endpoint": "POST /api/eligibility-batch-test",
+        "description": (
+            "Runs one or more loan scenarios through the eligibility engine and returns, "
+            "per scenario, matched programs (with eligible products + LoanPASS product IDs) "
+            "and rejected programs (with structured rejection reasons). Batch-capable: 1..N scenarios per call."
+        ),
+        "version": "v6.2.1",
+        "request_id": f"req_{int(datetime.now(timezone.utc).timestamp())}",
+        "generated_at": now,
+        "evaluation_engine_version": "v6.2.1",
+        "loanpass_snapshot_at": now,
+        "results": [],
+    }
+    for run in scenario_runs:
+        scenario_id = f"SCENARIO_{run.scenario_no}"
+        contract["results"].append(
+            {
+                "scenario_id": scenario_id,
+                "label": run.scenario_name,
+                "summary": {
+                    "total_programs_evaluated": run.total_programs_evaluated,
+                    "matched_count": len(run.matched_programs_contract),
+                    "rejected_count": len(run.rejected_programs_contract),
+                    "loanpass_pass_count": sum(
+                        1 for m in run.matched_programs_contract if bool(m.get("loanpass_pass"))
+                    ),
+                },
+                "matched_programs": run.matched_programs_contract,
+                "rejected_programs": run.rejected_programs_contract,
+                "warnings": [],
+                "info_needed": [],
+            }
+        )
+    return contract
+
+
+def build_batch_outputs(xlsx_bytes: bytes) -> tuple[bytes, bytes]:
+    scenario_runs = _execute_batch_runs(xlsx_bytes)
     merged = fitz.open()
     for run in scenario_runs:
         req = ScenarioPdfRequest(
@@ -801,4 +998,16 @@ def build_batch_report_pdf_bytes(xlsx_bytes: bytes) -> bytes:
     out = BytesIO()
     merged.save(out)
     merged.close()
-    return out.getvalue()
+    pdf_bytes = out.getvalue()
+    json_bytes = (json.dumps(_build_contract_from_runs(scenario_runs), indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    return pdf_bytes, json_bytes
+
+
+def build_batch_contract_json_bytes(xlsx_bytes: bytes) -> bytes:
+    _, json_bytes = build_batch_outputs(xlsx_bytes)
+    return json_bytes
+
+
+def build_batch_report_pdf_bytes(xlsx_bytes: bytes) -> bytes:
+    pdf_bytes, _ = build_batch_outputs(xlsx_bytes)
+    return pdf_bytes
