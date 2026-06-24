@@ -1,0 +1,65 @@
+name: Deploy Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_REPO: sumitsp/form-chat-assistant-testing
+    steps:
+      - name: Assert expected GitHub repository
+        run: |
+          test "${GITHUB_REPOSITORY}" = "${EXPECTED_REPO}" || {
+            echo "This workflow is restricted to ${EXPECTED_REPO}. Current: ${GITHUB_REPOSITORY}"
+            exit 1
+          }
+
+      - name: Install sshpass + curl
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass curl
+
+      - name: Deploy on server via SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+          DEPLOY_COMPOSE_DIR: ${{ secrets.DEPLOY_COMPOSE_DIR }}
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_PASSWORD"
+          test -n "$DEPLOY_COMPOSE_DIR"
+
+          sshpass -p "$DEPLOY_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$DEPLOY_USER@$DEPLOY_HOST" "
+            set -e
+            cd '$DEPLOY_COMPOSE_DIR'
+            REMOTE_URL=\$(git remote get-url origin)
+            echo \"origin remote: \$REMOTE_URL\"
+            echo \"\$REMOTE_URL\" | grep -Eq 'sumitsp/form-chat-assistant-testing(\.git)?$' || {
+              echo 'Refusing deploy: origin remote is not sumitsp/form-chat-assistant-testing'
+              exit 1
+            }
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up -d --build form-chat-assistant
+          "
+
+      - name: Health check
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "http://$DEPLOY_HOST:8082/api/health" >/dev/null; then
+              echo "Health check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Health check failed"
+          exit 1
