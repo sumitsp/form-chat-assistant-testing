@@ -1,0 +1,2226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NewPoint Mortgage Chatbot — Architecture Blueprint</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --surface2: #22263a;
+        --border: #2e3450;
+        --accent: #4f8ef7;
+        --accent2: #7c5cbf;
+        --green: #22c55e;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+        --cyan: #06b6d4;
+        --text: #e2e8f0;
+        --muted: #8892a4;
+        --code-bg: #13161f;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .wrap {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+
+      /* Nav */
+      nav {
+        position: sticky;
+        top: 0;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        z-index: 100;
+        padding: 0 24px;
+      }
+      nav ul {
+        display: flex;
+        gap: 0;
+        list-style: none;
+        overflow-x: auto;
+      }
+      nav a {
+        display: block;
+        padding: 14px 16px;
+        color: var(--muted);
+        text-decoration: none;
+        white-space: nowrap;
+        font-size: 13px;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      nav a:hover {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* Headers */
+      h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--accent);
+        margin: 40px 0 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--cyan);
+        margin: 24px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--yellow);
+        margin: 16px 0 8px;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .badge-mysql {
+        background: #1e3a5f;
+        color: #60a5fa;
+      }
+      .badge-qdrant {
+        background: #2d1b69;
+        color: #a78bfa;
+      }
+      .badge-both {
+        background: #1a3a2a;
+        color: #4ade80;
+      }
+      .badge-new {
+        background: #3d2a00;
+        color: #fbbf24;
+      }
+
+      /* Code blocks */
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 12px 0;
+        font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      code {
+        font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+        font-size: 12.5px;
+      }
+      .kw {
+        color: #c792ea;
+      }
+      .ty {
+        color: #82aaff;
+      }
+      .cm {
+        color: #546e7a;
+        font-style: italic;
+      }
+      .str {
+        color: #c3e88d;
+      }
+      .num {
+        color: #f78c6c;
+      }
+      .fn {
+        color: #82aaff;
+      }
+
+      /* Tables */
+      .tbl-wrap {
+        overflow-x: auto;
+        margin: 12px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        background: var(--surface2);
+        color: var(--muted);
+        font-weight: 600;
+        text-align: left;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+      }
+      td {
+        padding: 7px 12px;
+        border: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:nth-child(even) td {
+        background: #ffffff06;
+      }
+      td code {
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 11.5px;
+      }
+
+      /* Misc */
+      .meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 24px;
+      }
+      .tag {
+        display: inline-block;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 7px;
+        font-size: 11px;
+        color: var(--muted);
+        margin: 2px;
+      }
+      .flow-step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .step-num {
+        background: var(--accent);
+        color: #fff;
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .section {
+        scroll-margin-top: 56px;
+      }
+      p {
+        margin-bottom: 8px;
+        color: var(--text);
+      }
+      ul,
+      ol {
+        padding-left: 20px;
+        margin-bottom: 8px;
+      }
+      li {
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 32px 0;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .three-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        .two-col,
+        .three-col {
+          grid-template-columns: 1fr;
+        }
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lender-nqm {
+        border-left: 3px solid #4f8ef7;
+      }
+      .lender-dh {
+        border-left: 3px solid #22c55e;
+      }
+      .lender-verus {
+        border-left: 3px solid #a78bfa;
+      }
+      .note {
+        background: #1e2a1a;
+        border: 1px solid #2d4a2a;
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin: 12px 0;
+        color: #86efac;
+        font-size: 13px;
+      }
+      .warn {
+        background: #2a1e0a;
+        border: 1px solid #4a3000;
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin: 12px 0;
+        color: #fbbf24;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#programs">Programs</a></li>
+        <li><a href="#file-map">File Map</a></li>
+        <li><a href="#mysql">MySQL Schema</a></li>
+        <li><a href="#qdrant">Qdrant Schema</a></li>
+        <li><a href="#etl">ETL Notes</a></li>
+        <li><a href="#chatbot-flow">Chatbot Flow</a></li>
+        <li><a href="#three-way-split">3-Way Split Rule</a></li>
+      </ul>
+    </nav>
+
+    <div class="wrap">
+      <!-- ===================== OVERVIEW ===================== -->
+      <section id="overview" class="section">
+        <h1>NewPoint Mortgage Chatbot &mdash; Architecture Blueprint</h1>
+        <p class="meta">
+          Last updated: May 2026 &nbsp;|&nbsp; 3 Lenders &nbsp;|&nbsp; 28+ Programs &nbsp;|&nbsp;
+          Dual-store: MySQL + Qdrant
+        </p>
+
+        <div class="three-col">
+          <div class="card lender-nqm">
+            <h4>Denali / NQM</h4>
+            <p>10 programs &middot; NonQM + DSCR</p>
+            <p class="meta">Eff. 2/13/2026 &middot; 37-page matrix &middot; 142-page guidelines</p>
+            <div>
+              <span class="tag">Flex Supreme</span><span class="tag">Flex Select</span
+              ><span class="tag">Select ITIN</span><span class="tag">Super Jumbo</span
+              ><span class="tag">Second Lien Select</span><span class="tag">DSCR Supreme</span
+              ><span class="tag">Investor DSCR</span><span class="tag">Investor DSCR No Ratio</span
+              ><span class="tag">DSCR Multi 5-8</span><span class="tag">Foreign National</span>
+            </div>
+          </div>
+          <div class="card lender-dh">
+            <h4>Everest / Deephaven</h4>
+            <p>8 programs &middot; Expanded + DSCR + Equity</p>
+            <p class="meta">
+              Eff. 3/3/2026 &middot; Multiple matrix PDFs &middot; ~200-page guidelines
+            </p>
+            <div>
+              <span class="tag">Expanded Prime</span><span class="tag">Non-Prime</span
+              ><span class="tag">DSCR I</span><span class="tag">ITIN I</span
+              ><span class="tag">Equity Advantage</span
+              ><span class="tag">Equity Advantage Elite</span
+              ><span class="tag">Equity Advantage DSCR</span><span class="tag">DSCR 5-9 Unit</span>
+            </div>
+          </div>
+          <div class="card lender-verus">
+            <h4>Summit / Verus</h4>
+            <p>10 programs &middot; Non-Agency</p>
+            <p class="meta">
+              Eff. 3/9/2026 &middot; 20-page matrix &middot; 300+-page seller guide
+            </p>
+            <div>
+              <span class="tag">Prime Ascent Plus</span><span class="tag">Prime Ascent</span
+              ><span class="tag">ITIN</span><span class="tag">Investor Solutions DSCR Plus</span
+              ><span class="tag">Investor Solutions DSCR</span
+              ><span class="tag">DSCR 5-8 Unit/Mixed Use</span
+              ><span class="tag">Cross Collateral DSCR</span
+              ><span class="tag">Foreign National DSCR</span
+              ><span class="tag">Closed End Second</span><span class="tag">HELOC</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Architecture at a Glance</h3>
+          <div class="two-col">
+            <div>
+              <h4>MySQL (Structured Eligibility Gates)</h4>
+              <ul>
+                <li>Binary pass/fail rules: FICO min, LTV, loan amount, DSCR floor</li>
+                <li>Program-level flags: FTHB, IO, entity vesting, DTI cap, etc.</li>
+                <li>LTV matrix rows by FICO band x loan amt x occupancy x doc type</li>
+                <li>Documentation requirements output (step-2 answer)</li>
+                <li>Geographic restrictions (state/county/city level)</li>
+                <li>Credit event tiered seasoning rules</li>
+              </ul>
+            </div>
+            <div>
+              <h4>Qdrant (Semantic RAG &mdash; Guideline Text)</h4>
+              <ul>
+                <li>Complex conditional rules requiring natural language explanation</li>
+                <li>Calculation methodologies (DSCR, asset utilization, residual income)</li>
+                <li>Nuanced underwriting guidance (employment gaps, self-employment, etc.)</li>
+                <li>Borrower eligibility prose (citizenship types, co-borrower rules)</li>
+                <li>Transaction type rules (cash-out, delayed financing, construction)</li>
+                <li>Property eligibility details (condo types, rural, leasehold)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PROGRAM REGISTRY ===================== -->
+      <section id="programs" class="section">
+        <h2>Program Registry</h2>
+
+        <h3>Denali / NQM Programs</h3>
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>Program Name</th>
+              <th>FICO Range</th>
+              <th>Max Loan</th>
+              <th>Occupancy</th>
+              <th>Max DTI</th>
+              <th>DSCR?</th>
+              <th>2nd Lien?</th>
+              <th>IO?</th>
+              <th>FTHB?</th>
+              <th>Entity Vesting?</th>
+              <th>Key Notes</th>
+            </tr>
+            <tr>
+              <td>Flex Supreme</td>
+              <td>680&ndash;740</td>
+              <td>$3M</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes &le;$1.5M</td>
+              <td>No</td>
+              <td>Credit event 4yr; housing 0x30x12; non-occ co-borrower OK</td>
+            </tr>
+            <tr>
+              <td>Flex Select</td>
+              <td>660&ndash;760</td>
+              <td>$3.5M</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>
+                Tiered credit event (&ge;48mo/&ge;36mo/&ge;24mo LTV caps); Express DU sub-product;
+                WVOE/P&amp;L/Asset Util; 2-1 buydown
+              </td>
+            </tr>
+            <tr>
+              <td>Select ITIN</td>
+              <td>660&ndash;740</td>
+              <td>$2.5M</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>
+                DACA eligible; non-traditional credit; $125K&ndash;$149,999 requires 5% LTV
+                reduction; no sub financing
+              </td>
+            </tr>
+            <tr>
+              <td>Super Jumbo</td>
+              <td>720&ndash;740</td>
+              <td>$5M (min $3.5M)</td>
+              <td>Primary only</td>
+              <td>38%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>2 full appraisals required; asset util /84mo; no non-occ co-borrower</td>
+            </tr>
+            <tr>
+              <td>Second Lien Select</td>
+              <td>700&ndash;720</td>
+              <td>$1M (2nd)</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>Inv track</td>
+              <td>Yes (standalone)</td>
+              <td>No</td>
+              <td>Piggyback only</td>
+              <td>No</td>
+              <td>Min $50K; DSCR investment track available; no IO</td>
+            </tr>
+            <tr>
+              <td>DSCR Supreme</td>
+              <td>720&ndash;740</td>
+              <td>$2M</td>
+              <td>Investment BP</td>
+              <td>N/A</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>
+                Max 20 financed properties; investor experience not required; credit event 4yr
+              </td>
+            </tr>
+            <tr>
+              <td>Investor DSCR</td>
+              <td>660&ndash;740</td>
+              <td>$3M</td>
+              <td>Investment BP</td>
+              <td>N/A</td>
+              <td>Yes (&ge;1.00 &amp; .75&ndash;&lt;1.00)</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>FTHB w/ established primary</td>
+              <td>Yes</td>
+              <td>
+                Housing 0x30&rarr;no reduction, 1x30&rarr;5% LTV; credit event &ge;24mo no LTV
+                reduction
+              </td>
+            </tr>
+            <tr>
+              <td>Investor DSCR No Ratio</td>
+              <td>700&ndash;740</td>
+              <td>$1.5M</td>
+              <td>Investment BP</td>
+              <td>N/A</td>
+              <td>Yes (DSCR 0&ndash;.75)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No (no entity layering)</td>
+              <td>Credit event 3yr; 30yr/15yr fixed only; derogatory credit rules apply</td>
+            </tr>
+            <tr>
+              <td>DSCR Multi 5-8</td>
+              <td>720+</td>
+              <td>$3M</td>
+              <td>Investment BP (5-8 units)</td>
+              <td>N/A</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>
+                Credit event 2yr; housing 0x30x24; FN eligible (US credit); first time investor
+                eligible if 0x30x24 or own primary free+clear
+              </td>
+            </tr>
+            <tr>
+              <td>Foreign National</td>
+              <td>700+/No Score</td>
+              <td>$3M</td>
+              <td>2nd home (1-unit) + Inv 1-4</td>
+              <td>N/A</td>
+              <td>DSCR track</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>
+                ACH required; asset util /60mo; 12-mo reserves; OFAC restricted countries ineligible
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h3>Everest / Deephaven Programs</h3>
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>Program Name</th>
+              <th>FICO Range</th>
+              <th>Max Loan</th>
+              <th>Occupancy</th>
+              <th>Max DTI</th>
+              <th>DSCR?</th>
+              <th>2nd Lien?</th>
+              <th>IO?</th>
+              <th>FTHB?</th>
+              <th>Key Notes</th>
+            </tr>
+            <tr>
+              <td>Expanded Prime</td>
+              <td>660&ndash;720</td>
+              <td>$3.5M</td>
+              <td>P/2nd/Inv</td>
+              <td>55%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes (&le;80%)</td>
+              <td>Yes (no IO FTHB)</td>
+              <td>
+                Reserves tiered by loan amt; residual $2,500; FC/SS/DIL/BK 48mo; no sub fin on Inv;
+                NY P/2nd ineligible; HI lava 1&amp;2; Baltimore City; Philadelphia PA investor
+              </td>
+            </tr>
+            <tr>
+              <td>Non-Prime</td>
+              <td>620&ndash;700</td>
+              <td>$2M</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No (Inv)</td>
+              <td>
+                Standard + Recent Event tracks; residual $1,500 + $150/dependent; BK/FC/SS/DIL 24mo;
+                P&amp;L requires 2mo BS
+              </td>
+            </tr>
+            <tr>
+              <td>DSCR I</td>
+              <td>640&ndash;720 + FN</td>
+              <td>$2.5M ($1.5M FN)</td>
+              <td>Investment BP</td>
+              <td>N/A</td>
+              <td>Yes (&ge;1.00 &amp; &lt;1.00 min .75)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>
+                STR allowed min 1.15x/720/5% LTV reduction; FTI min 1.00/700 LT rental only;
+                domestic LLC required; BK/FC 36mo; no sub fin
+              </td>
+            </tr>
+            <tr>
+              <td>ITIN I</td>
+              <td>680&ndash;720</td>
+              <td>$1.5M</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>
+                Mortgage/rental 0x30x12; BK/FC 48mo; residual $1,500; no escrow waivers; limited
+                tradelines ineligible; 5% borrower contribution on gifts
+              </td>
+            </tr>
+            <tr>
+              <td>Equity Advantage</td>
+              <td>660&ndash;700</td>
+              <td>$1M (2nd only)</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>Yes (standalone)</td>
+              <td>Yes (&le;70% CLTV, 700+, primary, 1st fully amortize)</td>
+              <td>Yes</td>
+              <td>
+                Full Doc + 12mo BS; BK/FC 48mo; rural eligible w/ overlays; FN/ITIN ineligible; no
+                min reserves
+              </td>
+            </tr>
+            <tr>
+              <td>Equity Advantage Elite</td>
+              <td>680&ndash;740</td>
+              <td>$500K (2nd only)</td>
+              <td>P/2nd/Inv</td>
+              <td>50%</td>
+              <td>No</td>
+              <td>Yes (standalone)</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>
+                Full Doc only; BK/FC 84mo; housing 0x30x24; no NW condos, no rural; no reserves
+              </td>
+            </tr>
+            <tr>
+              <td>Equity Advantage DSCR</td>
+              <td>680&ndash;720</td>
+              <td>$500K (2nd only)</td>
+              <td>Investment BP</td>
+              <td>N/A</td>
+              <td>Yes (min 1.00x)</td>
+              <td>Yes (standalone)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>
+                BK/FC 48mo; no STR; 6-mo ownership seasoning; no reserves; domestic LLC eligible; HI
+                lava 1&amp;2 only
+              </td>
+            </tr>
+            <tr>
+              <td>DSCR 5-9 Unit</td>
+              <td>680&ndash;720</td>
+              <td>$2.5M</td>
+              <td>Investment BP (5-9 units)</td>
+              <td>N/A</td>
+              <td>Yes (min 1.15x)</td>
+              <td>No</td>
+              <td>Yes (&minus;5% LTV)</td>
+              <td>No (no FTI)</td>
+              <td>
+                BK/FC 84mo; housing 0x30x24; 5/6 ARM + 30Y Fixed; no STR; LLC + personal guarantor
+                required; 6-mo asset seasoning; seller concessions max 3%
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h3>Summit / Verus Programs</h3>
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>Program Name</th>
+              <th>FICO Range</th>
+              <th>Max Loan</th>
+              <th>Occupancy</th>
+              <th>DSCR?</th>
+              <th>2nd Lien?</th>
+              <th>IO?</th>
+              <th>FTHB?</th>
+              <th>Key Notes</th>
+            </tr>
+            <tr>
+              <td>Prime Ascent Plus</td>
+              <td>680&ndash;720</td>
+              <td>$2.5M</td>
+              <td>P/2nd/Inv</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes (700+ min)</td>
+              <td>Yes</td>
+              <td>
+                Standard + Alt Doc; no 2-4 unit/condotel/rural; credit event &ge;48mo; state
+                overlays CT/FL/IL/NJ/NY 85%/80%; entity vesting ineligible; acreage &le;5
+              </td>
+            </tr>
+            <tr>
+              <td>Prime Ascent</td>
+              <td>620&ndash;720</td>
+              <td>$4M</td>
+              <td>P/2nd/Inv</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes (660+ max 90%)</td>
+              <td>Yes</td>
+              <td>
+                WVOE/P&amp;L/Asset Util; tiered housing history LTV reductions; tiered credit event
+                (&ge;36mo/&ge;24mo/&ge;12mo); acreage &le;20
+              </td>
+            </tr>
+            <tr>
+              <td>ITIN</td>
+              <td>660&ndash;700</td>
+              <td>$1.5M</td>
+              <td>P/2nd only</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>
+                Credit event &ge;36mo; max DTI 50%; housing 1x30x12; no PR/GU/USVI; no declining
+                market adjustment
+              </td>
+            </tr>
+            <tr>
+              <td>Investor Solutions DSCR Plus</td>
+              <td>680&ndash;700</td>
+              <td>$2.5M</td>
+              <td>Investment BP</td>
+              <td>&ge;1.00 only</td>
+              <td>No</td>
+              <td>Yes (max 75%)</td>
+              <td>No (no FTI)</td>
+              <td>
+                Experienced investor required; no STR; cash-in-hand cap $500K/&ge;65% or
+                $1M/&lt;65%; IL/NY 2-4 ineligible; state overlays CT/FL/IL/NJ/NY
+              </td>
+            </tr>
+            <tr>
+              <td>Investor Solutions DSCR</td>
+              <td>640&ndash;700</td>
+              <td>$3.5M</td>
+              <td>Investment BP</td>
+              <td>&ge;1.00 &amp; &lt;1.00</td>
+              <td>No</td>
+              <td>Yes (680+ max 75%)</td>
+              <td>FTI w/ restrictions</td>
+              <td>
+                Experienced investor required; FTI min 700/&ge;36mo/1-unit/DSCR&gt;1.0/own primary;
+                STR allowed; complex STR income rules
+              </td>
+            </tr>
+            <tr>
+              <td>DSCR 5-8 Unit / Mixed Use</td>
+              <td>700&ndash;720</td>
+              <td>$3M (min $400K)</td>
+              <td>Investment BP (5-8 res or 2-8 mixed use)</td>
+              <td>&ge;1.00</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>No (no FTI)</td>
+              <td>
+                Commercial &le;49.99% for mixed use; max cash-out $1M; IL/NY + Baltimore City/Philly
+                PA/PR/GU/USVI ineligible
+              </td>
+            </tr>
+            <tr>
+              <td>Cross Collateral DSCR</td>
+              <td>660&ndash;700</td>
+              <td>$4M total (2-25 props)</td>
+              <td>Investment BP</td>
+              <td>&ge;1.00 (prop min .75)</td>
+              <td>No</td>
+              <td>Yes (680+ max 75%)</td>
+              <td>No</td>
+              <td>
+                Min $200K total; min $100K per property; max $1.5M per property; loan DSCR &ge;1.00
+                (&ge;1.20 top tier)
+              </td>
+            </tr>
+            <tr>
+              <td>Foreign National DSCR</td>
+              <td>680/No Score</td>
+              <td>$2.5M</td>
+              <td>Investment BP</td>
+              <td>&ge;1.00 &amp; &lt;1.00</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+              <td>
+                STR eligible (refi only); CT/FL/IL/NJ/NY 70% refi only/$2M; FL special Affidavit
+                required; IL/NY 2-4 ineligible
+              </td>
+            </tr>
+            <tr>
+              <td>Closed End Second</td>
+              <td>680&ndash;740</td>
+              <td>$750K (2nd only)</td>
+              <td>P/2nd/Inv</td>
+              <td>No</td>
+              <td>Yes (standalone)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>
+                Standard + BS + WVOE/P&amp;L+2mo BS; BK/FC/SS/DIL/PreFC/MC/NOD &ge;48mo; AUS
+                findings OK; TX ineligible; CT/FL/IL/NJ/NY max 80%/720+
+              </td>
+            </tr>
+            <tr>
+              <td>HELOC</td>
+              <td>680&ndash;740</td>
+              <td>$500K (2nd only)</td>
+              <td>P/2nd/Inv</td>
+              <td>No</td>
+              <td>Yes (HELOC)</td>
+              <td>N/A (variable)</td>
+              <td>No</td>
+              <td>
+                Standard + BS; BK/FC/SS/DIL &ge;84mo; max 15yr term; TX ineligible; CT/FL/IL/NJ/NY
+                max 80%/720+
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== FILE MAP ===================== -->
+      <section id="file-map" class="section">
+        <h2>File-to-Store Mapping</h2>
+        <p>Which source PDFs feed which data stores, and what gets extracted from each.</p>
+
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>File</th>
+              <th>Pages</th>
+              <th>&rarr; MySQL</th>
+              <th>&rarr; Qdrant</th>
+              <th>Priority</th>
+            </tr>
+            <tr>
+              <td>
+                <code>NonQM and DSCR Matrices 02 13 2026.pdf</code><br /><small>Denali/NQM</small>
+              </td>
+              <td>37</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> LTV matrix rows for all 10 programs;
+                program flags; doc type availability; credit event base rules; geographic
+                restrictions (p.1); DSCR min values
+              </td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> "General Requirements" prose sections
+                at bottom of each program page; nuanced overlay notes
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+            <tr>
+              <td>
+                <code>CORR Flow Product Matrices_1-5-26.pdf</code><br /><small
+                  >Everest/Deephaven &mdash; Expanded + Non-Prime + DSCR I + ITIN I</small
+                >
+              </td>
+              <td>~20</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> LTV rows for 4 programs; reserves JSON;
+                residual income rules; STR flags; FTI rules
+              </td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> "Borrower Eligibility" and program
+                footnote prose
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+            <tr>
+              <td>
+                <code>DHM Corr Equity Advantage Matrices_1-5-26.pdf</code><br /><small
+                  >Everest/Deephaven &mdash; Equity Advantage 2nd liens</small
+                >
+              </td>
+              <td>~10</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> LTV/CLTV rows for 3 second-lien
+                programs; IO restrictions; ownership seasoning
+              </td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> Rural eligibility overlay prose; IO
+                calculation notes
+              </td>
+              <td>&#x1F7E1; High</td>
+            </tr>
+            <tr>
+              <td>
+                <code>DSCR 5-9 Unit_CORR Matrices - PDF (2).pdf</code><br /><small
+                  >Everest/Deephaven &mdash; Multifamily DSCR</small
+                >
+              </td>
+              <td>~5</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> LTV rows; ARM product types; LLC +
+                guarantor flag; asset seasoning rules
+              </td>
+              <td>Minimal &mdash; matrix is relatively clean</td>
+              <td>&#x1F7E1; High</td>
+            </tr>
+            <tr>
+              <td>
+                <code>Corr BPL Flow Product Matrices.pdf</code><br /><small
+                  >Everest/Deephaven &mdash; BPL (same structure as DSCR I)</small
+                >
+              </td>
+              <td>~20</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> Cross-verify with DSCR I; use effective
+                date to determine supersession
+              </td>
+              <td>Skip if identical to DSCR I</td>
+              <td>&#x1F7E2; Medium (dedup check)</td>
+            </tr>
+            <tr>
+              <td>
+                <code>VMC-Correspondent-Non-Agency-Loan-LTV-Matrix-03.09.2026-Final.pdf</code
+                ><br /><small>Summit/Verus &mdash; all 10 programs</small>
+              </td>
+              <td>20+</td>
+              <td>
+                <span class="badge badge-mysql">MySQL</span> LTV rows; tiered credit event tiers;
+                tiered housing history LTV reductions; state overlay flags; cross-collateral
+                property rules
+              </td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> STR income calculation rules (Inv
+                Solutions DSCR); FTI eligibility conditions; state overlay explanations
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+            <tr>
+              <td>
+                <code>Flex NonQM and DSCR Underwriting Guidelines_2 13 2026.pdf</code><br /><small
+                  >Denali/NQM &mdash; 142 pages</small
+                >
+              </td>
+              <td>142</td>
+              <td>
+                <span class="badge badge-both">Both</span> Skip most to MySQL (already in matrix);
+                chunk guideline text &rarr; Qdrant
+              </td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> ALL prose: credit, income,
+                employment, property, borrower eligibility, transaction types, compliance, vesting,
+                DACA rules, WVOE methodology, asset utilization calc (/84 mo), DSCR calc method
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+            <tr>
+              <td>
+                <code>DH CORR Guidelines (3-3-26).pdf</code><br /><small
+                  >Everest/Deephaven &mdash; ~200 pages</small
+                >
+              </td>
+              <td>~200</td>
+              <td>Skip (covered by matrix)</td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> Transactions (delayed financing, TX
+                home equity, NY CEMA, flip, non-arms-length); Borrowers (CIP, fraud, co-borrowers,
+                leasehold, multiple financed props); Credit Analysis (rolling lates, collections, BK
+                by program); Liabilities
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+            <tr>
+              <td>
+                <code>VMC-Correspondent-Non-Agency-Seller-Guide-03.09.2026-Final.pdf</code
+                ><br /><small>Summit/Verus &mdash; 300+ pages</small>
+              </td>
+              <td>300+</td>
+              <td>Skip (covered by matrix)</td>
+              <td>
+                <span class="badge badge-qdrant">Qdrant</span> Chapter 2: Borrower Eligibility;
+                Transaction Types; Credit; Assets/Reserves/Gift Funds; Income (all alt doc
+                methodologies, DSCR calc, STR rules)
+              </td>
+              <td>&#x1F534; Critical</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="note">
+          <strong>ETL Rule of Thumb:</strong> Matrix PDFs are the primary source for MySQL
+          structured data. Guideline PDFs are the primary source for Qdrant semantic chunks. When
+          both contain overlapping info, MySQL wins for binary eligibility gates; Qdrant wins for
+          explanatory/conditional prose.
+        </div>
+      </section>
+
+      <!-- ===================== MYSQL SCHEMA ===================== -->
+      <section id="mysql" class="section">
+        <h2>MySQL Schema &mdash; Full DDL</h2>
+
+        <h3>1. lenders</h3>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">lenders</span> (
+  id           <span class="ty">TINYINT UNSIGNED</span>  <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  code         <span class="ty">VARCHAR</span>(<span class="num">20</span>)       <span class="kw">NOT NULL UNIQUE</span>,   <span class="cm">-- 'NQM', 'DEEPHAVEN', 'VERUS'</span>
+  brand_name   <span class="ty">VARCHAR</span>(<span class="num">100</span>)      <span class="kw">NOT NULL</span>,            <span class="cm">-- 'Denali', 'Everest', 'Summit'</span>
+  lender_name  <span class="ty">VARCHAR</span>(<span class="num">100</span>)      <span class="kw">NOT NULL</span>,            <span class="cm">-- 'NQM Funding', 'Deephaven', 'Verus'</span>
+  guidelines_url <span class="ty">VARCHAR</span>(<span class="num">500</span>),
+  matrix_url   <span class="ty">VARCHAR</span>(<span class="num">500</span>),
+  effective_date <span class="ty">DATE</span>,
+  created_at   <span class="ty">TIMESTAMP</span>         <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cm">-- Seed data</span>
+<span class="kw">INSERT INTO</span> lenders (code, brand_name, lender_name, effective_date) <span class="kw">VALUES</span>
+  (<span class="str">'NQM'</span>,       <span class="str">'Denali'</span>,  <span class="str">'NQM Funding'</span>,          <span class="str">'2026-02-13'</span>),
+  (<span class="str">'DEEPHAVEN'</span>, <span class="str">'Everest'</span>, <span class="str">'Deephaven Mortgage'</span>,   <span class="str">'2026-03-03'</span>),
+  (<span class="str">'VERUS'</span>,     <span class="str">'Summit'</span>,  <span class="str">'Verus Mortgage Capital'</span>,<span class="str">'2026-03-09'</span>);</pre>
+
+        <h3>2. programs</h3>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">programs</span> (
+  id                    <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  lender_id             <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">NOT NULL</span>,
+  program_code          <span class="ty">VARCHAR</span>(<span class="num">60</span>)        <span class="kw">NOT NULL UNIQUE</span>, <span class="cm">-- e.g. 'NQM_FLEX_SUPREME'</span>
+  program_name          <span class="ty">VARCHAR</span>(<span class="num">120</span>)       <span class="kw">NOT NULL</span>,
+
+  <span class="cm">-- Loan structure</span>
+  is_second_lien        <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_heloc              <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_dscr_program       <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_multifamily        <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_cross_collateral   <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_foreign_national   <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_itin_program       <span class="ty">TINYINT(1)</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  min_units             <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  max_units             <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">DEFAULT</span> <span class="num">4</span>,
+
+  <span class="cm">-- Loan amounts</span>
+  loan_amt_min          <span class="ty">INT UNSIGNED</span>       <span class="kw">NOT NULL DEFAULT</span> <span class="num">75000</span>,
+  loan_amt_max          <span class="ty">INT UNSIGNED</span>       <span class="kw">NOT NULL</span>,
+  loan_amt_max_secondary <span class="ty">INT UNSIGNED</span>      <span class="kw">NULL</span>,    <span class="cm">-- e.g. FN sub-limit within program</span>
+
+  <span class="cm">-- FICO</span>
+  fico_min              <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">NOT NULL</span>,
+  fico_max              <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">NULL</span>,    <span class="cm">-- NULL = no stated cap</span>
+  no_fico_allowed       <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>, <span class="cm">-- FN programs with no-score path</span>
+
+  <span class="cm">-- DTI / Residual income</span>
+  max_dti               <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)        <span class="kw">NULL</span>,    <span class="cm">-- NULL for pure DSCR programs</span>
+  residual_income_required <span class="ty">TINYINT(1)</span>      <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  residual_income_base  <span class="ty">DECIMAL</span>(<span class="num">8</span>,<span class="num">2</span>)        <span class="kw">NULL</span>,    <span class="cm">-- e.g. 2500.00 (DH Expanded Prime)</span>
+  residual_per_dependent <span class="ty">DECIMAL</span>(<span class="num">6</span>,<span class="num">2</span>)       <span class="kw">NULL</span>,    <span class="cm">-- 150.00 (DH Non-Prime)</span>
+
+  <span class="cm">-- DSCR</span>
+  dscr_min              <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">2</span>)        <span class="kw">NULL</span>,    <span class="cm">-- e.g. 1.00, 0.75, 1.15</span>
+  dscr_min_str          <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">2</span>)        <span class="kw">NULL</span>,    <span class="cm">-- STR-specific DSCR floor</span>
+  dscr_allows_below_one <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  dscr_calc_method      <span class="ty">ENUM</span>(<span class="str">'gross_rents_pitia'</span>,<span class="str">'gross_rents_itia'</span>,<span class="str">'noi_nds'</span>,<span class="str">'n/a'</span>)
+                                             <span class="kw">DEFAULT</span> <span class="str">'n/a'</span>,
+
+  <span class="cm">-- IO</span>
+  io_eligible           <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  io_min_fico           <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">NULL</span>,
+  io_max_ltv            <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)        <span class="kw">NULL</span>,
+  io_fthb_eligible      <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  io_occupancy_restrictions <span class="ty">VARCHAR</span>(<span class="num">200</span>)   <span class="kw">NULL</span>,
+
+  <span class="cm">-- Occupancy / Property</span>
+  occupancy_types       <span class="ty">JSON</span>               <span class="kw">NOT NULL</span>,
+  <span class="cm">-- ["primary","second","investment"]</span>
+  property_types_allowed   <span class="ty">JSON</span>            <span class="kw">NULL</span>,
+  property_types_ineligible <span class="ty">JSON</span>           <span class="kw">NULL</span>,
+  max_acreage           <span class="ty">DECIMAL</span>(<span class="num">5</span>,<span class="num">1</span>)        <span class="kw">NULL</span>,    <span class="cm">-- 5.0, 20.0</span>
+  mixed_use_max_commercial_pct <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>) <span class="kw">NULL</span>,  <span class="cm">-- 49.99 (Verus mixed use)</span>
+
+  <span class="cm">-- Transaction types</span>
+  loan_purposes_allowed <span class="ty">JSON</span>               <span class="kw">NOT NULL</span>,
+  <span class="cm">-- ["purchase","rate_term","cash_out"]</span>
+  product_types         <span class="ty">JSON</span>               <span class="kw">NOT NULL</span>,
+  <span class="cm">-- ["30yr_fixed","5_6_arm","15yr_fixed","io_30yr"]</span>
+  prepayment_penalty_eligible <span class="ty">TINYINT(1)</span>  <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  buydown_2_1_ok        <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+
+  <span class="cm">-- Cash-out limits</span>
+  cash_out_max_ltv_threshold   <span class="ty">INT UNSIGNED</span> <span class="kw">NULL</span>,
+  cash_out_max_amt_below       <span class="ty">INT UNSIGNED</span> <span class="kw">NULL</span>,
+  cash_out_max_amt_above       <span class="ty">INT UNSIGNED</span> <span class="kw">NULL</span>,
+  cash_in_hand_max_65plus_ltv  <span class="ty">INT UNSIGNED</span> <span class="kw">NULL</span>,  <span class="cm">-- Verus DSCR Plus: $500K if >=65%</span>
+  cash_in_hand_max_below_65    <span class="ty">INT UNSIGNED</span> <span class="kw">NULL</span>,  <span class="cm">-- $1M if <65%</span>
+
+  <span class="cm">-- Borrower eligibility flags</span>
+  us_citizen_ok         <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  perm_resident_ok      <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  non_perm_resident_ok  <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  itin_ok               <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  daca_ok               <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  foreign_national_ok   <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  non_occ_coborrower_ok <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  entity_vesting_ok     <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  entity_layering_prohibited <span class="ty">TINYINT(1)</span>   <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  domestic_llc_required <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  personal_guarantor_required <span class="ty">TINYINT(1)</span>  <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  subordinate_financing_allowed <span class="ty">TINYINT(1)</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  escrow_waiver_allowed <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  ach_required          <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,  <span class="cm">-- NQM Foreign National</span>
+
+  <span class="cm">-- FTHB / First Time Investor</span>
+  fthb_eligible         <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  fthb_max_loan         <span class="ty">INT UNSIGNED</span>       <span class="kw">NULL</span>,    <span class="cm">-- e.g. 1500000 (NQM Flex Supreme)</span>
+  fthb_restrictions     <span class="ty">VARCHAR</span>(<span class="num">500</span>)       <span class="kw">NULL</span>,    <span class="cm">-- 'piggyback_only', etc.</span>
+  first_time_investor_ok <span class="ty">TINYINT(1)</span>        <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  fti_conditions        <span class="ty">VARCHAR</span>(<span class="num">500</span>)       <span class="kw">NULL</span>,    <span class="cm">-- conditions for FTI eligibility</span>
+  investor_experience_required <span class="ty">TINYINT(1)</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  max_financed_properties <span class="ty">TINYINT UNSIGNED</span> <span class="kw">NULL</span>,
+
+  <span class="cm">-- Credit event base seasoning</span>
+  <span class="cm">-- For tiered programs see credit_event_tiers table</span>
+  credit_event_seasoning_months <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,
+  bk_seasoning_months          <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,
+  fc_ss_dil_seasoning_months   <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,
+  has_tiered_credit_events     <span class="ty">TINYINT(1)</span>        <span class="kw">DEFAULT</span> <span class="num">0</span>,
+
+  <span class="cm">-- Housing history</span>
+  <span class="cm">-- Format: 'NxDxM' = N lates of D-day bucket over M months</span>
+  housing_history_code         <span class="ty">VARCHAR</span>(<span class="num">30</span>)       <span class="kw">NULL</span>,   <span class="cm">-- '0x30x12','1x30x12','0x30x24'</span>
+  housing_history_1x30_ltv_reduction <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>) <span class="kw">NULL</span>, <span class="cm">-- e.g. 5.0 (NQM Investor DSCR)</span>
+
+  <span class="cm">-- Reserves</span>
+  reserves_json         <span class="ty">JSON</span>               <span class="kw">NULL</span>,
+  <span class="cm">-- {"default_months": 6,</span>
+  <span class="cm">--  "tiers": [{"max_loan_amt": 1500000, "months": 6},</span>
+  <span class="cm">--            {"max_loan_amt": 2000000, "months": 6},</span>
+  <span class="cm">--            {"max_loan_amt": 2500000, "months": 9},</span>
+  <span class="cm">--            {"max_loan_amt": 3000000, "months": 12}]}</span>
+
+  <span class="cm">-- Documentation</span>
+  doc_types_allowed     <span class="ty">JSON</span>               <span class="kw">NOT NULL</span>,
+  <span class="cm">-- ["full_doc","bank_stmt_12","bank_stmt_24","pl_only",</span>
+  <span class="cm">--  "pl_2mo_bs","wvoe","asset_util","1099","dscr_rental"]</span>
+  asset_util_divisor    <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">NULL</span>,    <span class="cm">-- 60 or 84 months</span>
+  self_employment_min_years <span class="ty">TINYINT UNSIGNED</span> <span class="kw">NULL</span>,
+  pl_requires_bank_stmt <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>, <span class="cm">-- DH Non-Prime: P&L needs 2mo BS</span>
+  gift_funds_min_borrower_pct <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>) <span class="kw">NULL</span>,    <span class="cm">-- DH ITIN: 5%</span>
+
+  <span class="cm">-- STR (Short-Term Rental)</span>
+  str_eligible          <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  str_min_dscr          <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">2</span>)        <span class="kw">NULL</span>,
+  str_min_fico          <span class="ty">SMALLINT UNSIGNED</span>  <span class="kw">NULL</span>,
+  str_ltv_reduction     <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)        <span class="kw">NULL</span>,    <span class="cm">-- e.g. 5.0%</span>
+  str_refi_only         <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+
+  <span class="cm">-- Seller concessions</span>
+  seller_concessions_max_pct <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)  <span class="kw">NULL</span>,    <span class="cm">-- 3.0 (DH DSCR 5-9 Unit)</span>
+
+  <span class="cm">-- Ownership / seasoning</span>
+  min_ownership_seasoning_months <span class="ty">TINYINT UNSIGNED</span> <span class="kw">NULL</span>,
+  asset_seasoning_months         <span class="ty">TINYINT UNSIGNED</span> <span class="kw">NULL</span>,
+
+  <span class="cm">-- Appraisal</span>
+  appraisals_required   <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">DEFAULT</span> <span class="num">1</span>, <span class="cm">-- NQM Super Jumbo: 2</span>
+
+  <span class="cm">-- AUS / Sub-products</span>
+  aus_allowed           <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  express_du_available  <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">0</span>, <span class="cm">-- NQM Flex Select</span>
+
+  <span class="cm">-- Cross-collateral specific</span>
+  xc_min_properties     <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">NULL</span>,    <span class="cm">-- 2</span>
+  xc_max_properties     <span class="ty">TINYINT UNSIGNED</span>   <span class="kw">NULL</span>,    <span class="cm">-- 25</span>
+  xc_min_total_loan     <span class="ty">INT UNSIGNED</span>       <span class="kw">NULL</span>,    <span class="cm">-- $200K</span>
+  xc_max_per_property   <span class="ty">INT UNSIGNED</span>       <span class="kw">NULL</span>,    <span class="cm">-- $1.5M</span>
+  xc_min_property_value <span class="ty">INT UNSIGNED</span>       <span class="kw">NULL</span>,    <span class="cm">-- $100K</span>
+  xc_property_dscr_min  <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">2</span>)        <span class="kw">NULL</span>,    <span class="cm">-- .75 property-level DSCR</span>
+
+  <span class="cm">-- Misc</span>
+  exceptions_allowed    <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  notes                 <span class="ty">TEXT</span>               <span class="kw">NULL</span>,
+
+  <span class="cm">-- Metadata</span>
+  effective_date        <span class="ty">DATE</span>               <span class="kw">NOT NULL</span>,
+  superseded_date       <span class="ty">DATE</span>               <span class="kw">NULL</span>,
+  is_active             <span class="ty">TINYINT(1)</span>         <span class="kw">DEFAULT</span> <span class="num">1</span>,
+  created_at            <span class="ty">TIMESTAMP</span>          <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  updated_at            <span class="ty">TIMESTAMP</span>          <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>
+                                             <span class="kw">ON UPDATE</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">FOREIGN KEY</span> (lender_id) <span class="kw">REFERENCES</span> lenders(id),
+  <span class="kw">INDEX</span> idx_lender  (lender_id),
+  <span class="kw">INDEX</span> idx_active  (is_active),
+  <span class="kw">INDEX</span> idx_dscr    (is_dscr_program),
+  <span class="kw">INDEX</span> idx_second  (is_second_lien)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;</pre>
+
+        <h3>3. ltv_matrix</h3>
+        <p>
+          Each row represents one cell in a program LTV grid. The chatbot queries this to find the
+          maximum LTV given all borrower inputs.
+        </p>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">ltv_matrix</span> (
+  id              <span class="ty">INT UNSIGNED</span>      <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  program_id      <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NOT NULL</span>,
+
+  <span class="cm">-- Matching dimensions (all used together to find the best matching row)</span>
+  fico_min        <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NOT NULL</span>,
+  fico_max        <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,     <span class="cm">-- NULL = 850</span>
+  loan_amt_min    <span class="ty">INT UNSIGNED</span>      <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  loan_amt_max    <span class="ty">INT UNSIGNED</span>      <span class="kw">NULL</span>,     <span class="cm">-- NULL = no cap</span>
+  occupancy       <span class="ty">ENUM</span>(<span class="str">'primary'</span>,<span class="str">'second'</span>,<span class="str">'investment'</span>,<span class="str">'any'</span>)
+                                    <span class="kw">NOT NULL DEFAULT</span> <span class="str">'any'</span>,
+  units           <span class="ty">ENUM</span>(<span class="str">'1'</span>,<span class="str">'2'</span>,<span class="str">'3'</span>,<span class="str">'4'</span>,<span class="str">'5-8'</span>,<span class="str">'5-9'</span>,<span class="str">'1-4'</span>,<span class="str">'any'</span>)
+                                    <span class="kw">NOT NULL DEFAULT</span> <span class="str">'any'</span>,
+  doc_type        <span class="ty">ENUM</span>(<span class="str">'full_doc'</span>,<span class="str">'bank_stmt_12'</span>,<span class="str">'bank_stmt_24'</span>,<span class="str">'pl_only'</span>,
+                       <span class="str">'pl_2mo_bs'</span>,<span class="str">'wvoe'</span>,<span class="str">'asset_util'</span>,<span class="str">'1099'</span>,
+                       <span class="str">'dscr_rental'</span>,<span class="str">'itin'</span>,<span class="str">'non_traditional'</span>,<span class="str">'any'</span>)
+                                    <span class="kw">NOT NULL DEFAULT</span> <span class="str">'any'</span>,
+  loan_purpose    <span class="ty">ENUM</span>(<span class="str">'purchase'</span>,<span class="str">'rate_term'</span>,<span class="str">'cash_out'</span>,<span class="str">'any'</span>)
+                                    <span class="kw">NOT NULL DEFAULT</span> <span class="str">'any'</span>,
+  dscr_band       <span class="ty">ENUM</span>(<span class="str">'gte_1_00'</span>,<span class="str">'gte_0_75_lt_1_00'</span>,<span class="str">'lt_0_75'</span>,<span class="str">'any'</span>)
+                                    <span class="kw">DEFAULT</span> <span class="str">'any'</span>,
+  is_io           <span class="ty">TINYINT(1)</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_str          <span class="ty">TINYINT(1)</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,
+  is_fthb         <span class="ty">TINYINT(1)</span>        <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  state_override  <span class="ty">CHAR</span>(<span class="num">2</span>)           <span class="kw">NULL</span>,   <span class="cm">-- NULL=all states; 'CT','FL',etc.</span>
+
+  <span class="cm">-- Output</span>
+  max_ltv         <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NOT NULL</span>,
+  max_cltv        <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NULL</span>,   <span class="cm">-- for second liens and HELOCs</span>
+  ltv_note        <span class="ty">VARCHAR</span>(<span class="num">300</span>)      <span class="kw">NULL</span>,   <span class="cm">-- e.g. '5% reduction for loan &lt;$150K'</span>
+  sort_order      <span class="ty">SMALLINT</span>          <span class="kw">DEFAULT</span> <span class="num">0</span>, <span class="cm">-- lower = more specific = higher priority</span>
+
+  <span class="kw">FOREIGN KEY</span> (program_id) <span class="kw">REFERENCES</span> programs(id),
+  <span class="kw">INDEX</span> idx_prog_fico (program_id, fico_min, fico_max),
+  <span class="kw">INDEX</span> idx_prog_occ  (program_id, occupancy),
+  <span class="kw">INDEX</span> idx_prog_doc  (program_id, doc_type)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;</pre>
+
+        <h3>4. credit_event_tiers <span class="badge badge-new">NEW</span></h3>
+        <p>
+          For programs with tiered LTV caps based on credit event seasoning months. Examples: NQM
+          Flex Select (3 tiers), Verus Prime Ascent (3 tiers).
+        </p>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">credit_event_tiers</span> (
+  id                <span class="ty">INT UNSIGNED</span>      <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  program_id        <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NOT NULL</span>,
+  min_months        <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NOT NULL</span>,  <span class="cm">-- >= this many months seasoning</span>
+  max_months        <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,       <span class="cm">-- NULL = no upper bound (best tier)</span>
+  max_ltv_purchase  <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NULL</span>,       <span class="cm">-- NULL = use base ltv_matrix</span>
+  max_ltv_refi      <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NULL</span>,
+  max_loan_amount   <span class="ty">INT UNSIGNED</span>      <span class="kw">NULL</span>,       <span class="cm">-- NULL = no restriction</span>
+  ltv_reduction_pct <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NULL</span>,       <span class="cm">-- alternative: delta from base</span>
+  tier_note         <span class="ty">VARCHAR</span>(<span class="num">300</span>)      <span class="kw">NULL</span>,
+  <span class="kw">FOREIGN KEY</span> (program_id) <span class="kw">REFERENCES</span> programs(id),
+  <span class="kw">INDEX</span> idx_prog_months (program_id, min_months)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cm">-- NQM Flex Select (program_code='NQM_FLEX_SELECT')</span>
+<span class="cm">-- Tier 1: >=48 months: use base matrix (no LTV cap)</span>
+<span class="cm">-- Tier 2: >=36 months, <48 months: max 80% LTV</span>
+<span class="cm">-- Tier 3: >=24 months, <36 months: max 70% LTV</span>
+
+<span class="cm">-- Verus Prime Ascent (program_code='VERUS_PRIME_ASCENT')</span>
+<span class="cm">-- Tier 1: >=36 months: use base matrix</span>
+<span class="cm">-- Tier 2: >=24 months, <36 months: max 80% purchase / 75% refi / $1.5M max loan</span>
+<span class="cm">-- Tier 3: >=12 months, <24 months: max 70% / $1M max loan</span></pre>
+
+        <h3>5. doc_requirements <span class="badge badge-new">NEW</span></h3>
+        <p>
+          The chatbot's step-2 output. One row per (program, doc_type, borrower_type). Returns a
+          JSON checklist of required documents.
+        </p>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">doc_requirements</span> (
+  id              <span class="ty">INT UNSIGNED</span>      <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  program_id      <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NOT NULL</span>,
+  doc_type        <span class="ty">ENUM</span>(<span class="str">'full_doc'</span>,<span class="str">'bank_stmt_12'</span>,<span class="str">'bank_stmt_24'</span>,<span class="str">'pl_only'</span>,
+                       <span class="str">'pl_2mo_bs'</span>,<span class="str">'wvoe'</span>,<span class="str">'asset_util'</span>,<span class="str">'1099'</span>,
+                       <span class="str">'dscr_rental'</span>,<span class="str">'itin'</span>,<span class="str">'non_traditional'</span>) <span class="kw">NOT NULL</span>,
+  borrower_type   <span class="ty">ENUM</span>(<span class="str">'wage_earner'</span>,<span class="str">'self_employed'</span>,<span class="str">'retired'</span>,
+                       <span class="str">'rental_income'</span>,<span class="str">'foreign_national'</span>,<span class="str">'itin'</span>,<span class="str">'any'</span>) <span class="kw">NOT NULL</span>,
+  documents       <span class="ty">JSON</span>              <span class="kw">NOT NULL</span>,
+  <span class="cm">/*
+    {
+      "required": [
+        "2 years W-2s",
+        "30 days paystubs",
+        "2 months bank statements"
+      ],
+      "conditional": [
+        {"condition": "self_employed >=2yr history",
+         "docs": ["2 years tax returns (personal + business)", "YTD P&L"]},
+        {"condition": "rental income claimed",
+         "docs": ["Executed lease agreements", "Schedule E or 1007/216 appraisal"]}
+      ],
+      "notes": "For bank statement programs: personal OR business statements accepted"
+    }
+  */</span>
+  min_months_history <span class="ty">TINYINT UNSIGNED</span>  <span class="kw">NULL</span>,  <span class="cm">-- 12 or 24 months of statements</span>
+  notes           <span class="ty">VARCHAR</span>(<span class="num">1000</span>)     <span class="kw">NULL</span>,
+  <span class="kw">FOREIGN KEY</span> (program_id) <span class="kw">REFERENCES</span> programs(id),
+  <span class="kw">UNIQUE KEY</span> uq_prog_doc_btype (program_id, doc_type, borrower_type),
+  <span class="kw">INDEX</span> idx_prog_doc (program_id, doc_type)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;</pre>
+
+        <h3>6. geographic_restrictions</h3>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">geographic_restrictions</span> (
+  id                 <span class="ty">INT UNSIGNED</span>      <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  lender_id          <span class="ty">TINYINT UNSIGNED</span>  <span class="kw">NULL</span>,   <span class="cm">-- NULL = program-specific only</span>
+  program_id         <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,   <span class="cm">-- NULL = all programs for lender</span>
+  state              <span class="ty">CHAR</span>(<span class="num">2</span>)           <span class="kw">NOT NULL</span>,
+  county_city        <span class="ty">VARCHAR</span>(<span class="num">200</span>)      <span class="kw">NULL</span>,   <span class="cm">-- e.g. 'Baltimore City'</span>
+  restriction_type   <span class="ty">ENUM</span>(
+    <span class="str">'ineligible'</span>,             <span class="cm">-- fully ineligible</span>
+    <span class="str">'ineligible_occupancy'</span>,   <span class="cm">-- NY: primary/2nd ineligible (DH)</span>
+    <span class="str">'ineligible_investor'</span>,    <span class="cm">-- Baltimore/Philly: investment ineligible</span>
+    <span class="str">'ineligible_property_type'</span>, <span class="cm">-- IL/NY: 2-4 unit ineligible (Verus DSCR)</span>
+    <span class="str">'ltv_cap'</span>,                <span class="cm">-- Verus state overlays</span>
+    <span class="str">'ltv_cap_refi_only'</span>,      <span class="cm">-- Verus FN: 70% refi only</span>
+    <span class="str">'lava_zone'</span>,              <span class="cm">-- HI lava zones 1 & 2</span>
+    <span class="str">'requires_affidavit'</span>,     <span class="cm">-- Verus FN: FL affidavit</span>
+    <span class="str">'special_overlay'</span>
+  ) <span class="kw">NOT NULL</span>,
+  max_ltv            <span class="ty">DECIMAL</span>(<span class="num">4</span>,<span class="num">1</span>)      <span class="kw">NULL</span>,
+  min_fico           <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,
+  max_loan_amt       <span class="ty">INT UNSIGNED</span>      <span class="kw">NULL</span>,
+  occupancy_affected <span class="ty">JSON</span>              <span class="kw">NULL</span>,   <span class="cm">-- ["primary","second"] or ["investment"]</span>
+  property_types_affected <span class="ty">JSON</span>        <span class="kw">NULL</span>,   <span class="cm">-- ["2_unit","3_unit","4_unit"]</span>
+  restriction_detail <span class="ty">VARCHAR</span>(<span class="num">500</span>)     <span class="kw">NULL</span>,
+  <span class="kw">FOREIGN KEY</span> (lender_id) <span class="kw">REFERENCES</span> lenders(id),
+  <span class="kw">FOREIGN KEY</span> (program_id) <span class="kw">REFERENCES</span> programs(id),
+  <span class="kw">INDEX</span> idx_state (state),
+  <span class="kw">INDEX</span> idx_lender_state (lender_id, state),
+  <span class="kw">INDEX</span> idx_prog_state   (program_id, state)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cm">-- KEY ROWS TO SEED:</span>
+<span class="cm">-- NQM global (lender_id=1, program_id=NULL):</span>
+<span class="cm">--   HI + 'Lava Zones 1 & 2' → ineligible</span>
+<span class="cm">--   (plus any additional per p.1 of NQM matrix)</span>
+
+<span class="cm">-- DH all programs (lender_id=2, program_id=NULL):</span>
+<span class="cm">--   NY → ineligible_occupancy (primary + 2nd) → occupancy_affected: ["primary","second"]</span>
+<span class="cm">--   HI + 'Lava Zones 1 & 2' → ineligible</span>
+<span class="cm">--   MD + 'Baltimore City' → ineligible_investor → occupancy_affected: ["investment"]</span>
+<span class="cm">--   PA + 'Philadelphia' → ineligible_investor → occupancy_affected: ["investment"]</span>
+
+<span class="cm">-- Verus all programs (lender_id=3, program_id=NULL):</span>
+<span class="cm">--   MD + 'Baltimore City' → ineligible</span>
+<span class="cm">--   PA + 'Philadelphia County' → ineligible</span>
+<span class="cm">--   PR, GU, USVI → ineligible</span>
+
+<span class="cm">-- Verus Prime Ascent Plus + Prime Ascent (program-specific):</span>
+<span class="cm">--   CT → ltv_cap 85%</span>
+<span class="cm">--   FL, IL, NJ, NY → ltv_cap 80%</span>
+
+<span class="cm">-- Verus CES + HELOC (program-specific):</span>
+<span class="cm">--   TX → ineligible</span>
+<span class="cm">--   CT, FL, IL, NJ, NY → ltv_cap 80% + min_fico 720</span>
+
+<span class="cm">-- Verus FN DSCR (program-specific):</span>
+<span class="cm">--   CT, FL, IL, NJ, NY → ltv_cap_refi_only 70% + max_loan_amt 2000000</span>
+<span class="cm">--   FL → requires_affidavit</span>
+<span class="cm">--   IL, NY → ineligible_property_type → property_types: ["2-4_unit"]</span>
+
+<span class="cm">-- Verus DSCR programs (DSCR Plus + DSCR + 5-8 Unit + XC):</span>
+<span class="cm">--   IL, NY → ineligible_property_type → property_types: ["2_unit","3_unit","4_unit"]</span></pre>
+
+        <h3>7. sessions + session_answers</h3>
+        <pre><span class="kw">CREATE TABLE</span> <span class="ty">sessions</span> (
+  id                    <span class="ty">VARCHAR</span>(<span class="num">36</span>)        <span class="kw">PRIMARY KEY</span>,   <span class="cm">-- UUID v4</span>
+  channel               <span class="ty">ENUM</span>(<span class="str">'web'</span>,<span class="str">'sms'</span>,<span class="str">'voice'</span>,<span class="str">'api'</span>) <span class="kw">DEFAULT</span> <span class="str">'web'</span>,
+  status                <span class="ty">ENUM</span>(<span class="str">'active'</span>,<span class="str">'completed'</span>,<span class="str">'abandoned'</span>,<span class="str">'escalated'</span>)
+                                            <span class="kw">DEFAULT</span> <span class="str">'active'</span>,
+  matched_program_ids   <span class="ty">JSON</span>              <span class="kw">NULL</span>,   <span class="cm">-- programs passing eligibility</span>
+  recommended_program_id <span class="ty">SMALLINT UNSIGNED</span> <span class="kw">NULL</span>,
+  lo_email              <span class="ty">VARCHAR</span>(<span class="num">200</span>)      <span class="kw">NULL</span>,
+  started_at            <span class="ty">TIMESTAMP</span>         <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  completed_at          <span class="ty">TIMESTAMP</span>         <span class="kw">NULL</span>,
+  <span class="kw">FOREIGN KEY</span> (recommended_program_id) <span class="kw">REFERENCES</span> programs(id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="kw">CREATE TABLE</span> <span class="ty">session_answers</span> (
+  id              <span class="ty">INT UNSIGNED</span>      <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  session_id      <span class="ty">VARCHAR</span>(<span class="num">36</span>)       <span class="kw">NOT NULL</span>,
+  question_key    <span class="ty">VARCHAR</span>(<span class="num">60</span>)       <span class="kw">NOT NULL</span>,
+  answer_value    <span class="ty">VARCHAR</span>(<span class="num">500</span>)      <span class="kw">NOT NULL</span>,
+  answered_at     <span class="ty">TIMESTAMP</span>         <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  <span class="kw">FOREIGN KEY</span> (session_id) <span class="kw">REFERENCES</span> sessions(id),
+  <span class="kw">UNIQUE KEY</span> uq_session_q (session_id, question_key),
+  <span class="kw">INDEX</span> idx_session (session_id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;</pre>
+
+        <div class="warn">
+          <strong>Question keys for session_answers:</strong>
+          loan_purpose &middot; property_state &middot; occupancy &middot; property_type &middot;
+          units &middot; loan_amount &middot; fico_score &middot; doc_type &middot; is_dscr &middot;
+          dscr_value &middot; is_fthb &middot; is_first_time_investor &middot; is_foreign_national
+          &middot; is_itin &middot; is_entity &middot; is_io_requested &middot; credit_event_type
+          &middot; credit_event_months_ago &middot; housing_lates_code &middot; is_str &middot;
+          is_multifamily &middot; lender_preference
+        </div>
+      </section>
+
+      <!-- ===================== QDRANT SCHEMA ===================== -->
+      <section id="qdrant" class="section">
+        <h2>Qdrant Schema</h2>
+
+        <h3>Collection: <code>mortgage_guidelines</code></h3>
+        <p>
+          One collection for all three lenders. Lender and program filtering via payload metadata at
+          query time.
+        </p>
+
+        <pre><span class="cm"># Collection creation (Python SDK)</span>
+<span class="kw">from</span> qdrant_client <span class="kw">import</span> QdrantClient, models
+
+client = QdrantClient(url=<span class="str">"http://localhost:6333"</span>)
+
+client.create_collection(
+    collection_name=<span class="str">"mortgage_guidelines"</span>,
+    vectors_config=models.VectorParams(
+        size=<span class="num">1536</span>,          <span class="cm"># OpenAI text-embedding-3-small</span>
+        distance=models.Distance.COSINE,
+        on_disk=<span class="kw">True</span>,       <span class="cm"># large corpus -- keep vecs on disk</span>
+    ),
+    hnsw_config=models.HnswConfigDiff(
+        m=<span class="num">16</span>,
+        ef_construct=<span class="num">200</span>,
+        full_scan_threshold=<span class="num">10000</span>,
+    ),
+    quantization_config=models.ScalarQuantization(
+        scalar=models.ScalarQuantizationConfig(
+            type=models.ScalarType.INT8,
+            quantile=<span class="num">0.99</span>,
+            always_ram=<span class="kw">True</span>,
+        )
+    )
+)</pre>
+
+        <h3>Payload Field Taxonomy</h3>
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>Field</th>
+              <th>Type</th>
+              <th>Example Value</th>
+              <th>Indexed?</th>
+              <th>Purpose</th>
+            </tr>
+            <tr>
+              <td><code>chunk_id</code></td>
+              <td>keyword</td>
+              <td><code>"NQM-GUIDE-CREDIT-0042"</code></td>
+              <td>Yes</td>
+              <td>Unique ID for dedup and updates</td>
+            </tr>
+            <tr>
+              <td><code>lender_id</code></td>
+              <td>keyword</td>
+              <td><code>"NQM"</code> | <code>"DEEPHAVEN"</code> | <code>"VERUS"</code></td>
+              <td>Yes</td>
+              <td>Primary filter by lender</td>
+            </tr>
+            <tr>
+              <td><code>program_ids</code></td>
+              <td>keyword[]</td>
+              <td><code>["NQM_FLEX_SELECT","NQM_FLEX_SUPREME"]</code></td>
+              <td>Yes</td>
+              <td>Scope to specific programs; empty array = all lender programs</td>
+            </tr>
+            <tr>
+              <td><code>section_type</code></td>
+              <td>keyword</td>
+              <td><code>"credit"</code></td>
+              <td>Yes</td>
+              <td>Primary content category (see enum below)</td>
+            </tr>
+            <tr>
+              <td><code>topic_tags</code></td>
+              <td>keyword[]</td>
+              <td><code>["bankruptcy","chapter_7","seasoning"]</code></td>
+              <td>Yes</td>
+              <td>Fine-grained topic filtering</td>
+            </tr>
+            <tr>
+              <td><code>doc_type_context</code></td>
+              <td>keyword[]</td>
+              <td><code>["bank_stmt_24","pl_only"]</code></td>
+              <td>Yes</td>
+              <td>Doc-type-specific content filter</td>
+            </tr>
+            <tr>
+              <td><code>occupancy_context</code></td>
+              <td>keyword[]</td>
+              <td><code>["investment"]</code></td>
+              <td>Yes</td>
+              <td>Occupancy-specific content filter</td>
+            </tr>
+            <tr>
+              <td><code>borrower_type_context</code></td>
+              <td>keyword[]</td>
+              <td><code>["self_employed","foreign_national"]</code></td>
+              <td>No</td>
+              <td>Soft filter for borrower-type content</td>
+            </tr>
+            <tr>
+              <td><code>chunk_type</code></td>
+              <td>keyword</td>
+              <td><code>"calculation"</code></td>
+              <td>Yes</td>
+              <td>Structural role of chunk</td>
+            </tr>
+            <tr>
+              <td><code>text</code></td>
+              <td>text</td>
+              <td>(raw chunk text, 400&ndash;900 tokens)</td>
+              <td>No (vector)</td>
+              <td>Source text returned to LLM</td>
+            </tr>
+            <tr>
+              <td><code>source_file</code></td>
+              <td>keyword</td>
+              <td><code>"Flex NonQM...Guidelines_2 13 2026.pdf"</code></td>
+              <td>No</td>
+              <td>Citation provenance</td>
+            </tr>
+            <tr>
+              <td><code>page_number</code></td>
+              <td>integer</td>
+              <td><code>42</code></td>
+              <td>No</td>
+              <td>Citation provenance</td>
+            </tr>
+            <tr>
+              <td><code>heading_path</code></td>
+              <td>keyword</td>
+              <td><code>"Section 5 &gt; 5.3 Housing History &gt; Rolling Lates"</code></td>
+              <td>No</td>
+              <td>Navigation context for LLM</td>
+            </tr>
+            <tr>
+              <td><code>effective_date</code></td>
+              <td>keyword</td>
+              <td><code>"2026-02-13"</code></td>
+              <td>Yes</td>
+              <td>Filter superseded guidelines</td>
+            </tr>
+            <tr>
+              <td><code>is_superseded</code></td>
+              <td>bool</td>
+              <td><code>false</code></td>
+              <td>Yes</td>
+              <td>Exclude outdated guideline versions</td>
+            </tr>
+            <tr>
+              <td><code>token_count</code></td>
+              <td>integer</td>
+              <td><code>420</code></td>
+              <td>No</td>
+              <td>ETL tracking</td>
+            </tr>
+          </table>
+        </div>
+
+        <h3>section_type Enum</h3>
+        <div class="tbl-wrap">
+          <table>
+            <tr>
+              <th>Value</th>
+              <th>Guideline Sections</th>
+            </tr>
+            <tr>
+              <td><code>credit</code></td>
+              <td>
+                Credit report, qualifying score, tradelines, housing history, rolling lates,
+                collections, judgments/tax liens, bankruptcy (all chapters), foreclosure/SS/DIL
+              </td>
+            </tr>
+            <tr>
+              <td><code>income_full_doc</code></td>
+              <td>
+                Wage earner income, W-2/paystubs, self-employment 2yr, 1099, rental income (Schedule
+                E/lease), retirement income
+              </td>
+            </tr>
+            <tr>
+              <td><code>income_alt_doc</code></td>
+              <td>
+                Bank statement methodology (12mo/24mo, personal/business, expense factor), P&amp;L
+                only methodology, WVOE requirements, asset utilization formula (/60 or /84 months),
+                1099 alt method
+              </td>
+            </tr>
+            <tr>
+              <td><code>income_dscr</code></td>
+              <td>
+                DSCR calculation (gross rents / PITIA vs ITIA for IO), STR income rules, market rent
+                methodology (1007/216), DSCR for multifamily
+              </td>
+            </tr>
+            <tr>
+              <td><code>borrower_eligibility</code></td>
+              <td>
+                Citizenship types (US/PRA/non-PRA/ITIN/DACA/FN), OFAC, co-borrowers, non-occupant
+                co-borrowers, FTHB definition, vesting, leasehold, max financed properties
+              </td>
+            </tr>
+            <tr>
+              <td><code>transaction</code></td>
+              <td>
+                Purchase, rate-term refi, cash-out, delayed financing, construction, TX home equity,
+                NY CEMA, flip, non-arms-length, debt consolidation, second lien
+              </td>
+            </tr>
+            <tr>
+              <td><code>property</code></td>
+              <td>
+                Property types, condo warrantability, condotel, rural, acreage, leasehold,
+                mixed-use, declining markets, appraisal requirements
+              </td>
+            </tr>
+            <tr>
+              <td><code>assets_reserves</code></td>
+              <td>
+                Reserve methodology, asset seasoning, gift fund rules, business funds, retirement
+                asset haircut, crypto, asset depletion
+              </td>
+            </tr>
+            <tr>
+              <td><code>compliance</code></td>
+              <td>
+                HPML, high-cost mortgage, NY subprime, prepayment penalties, TRID, CIP/fraud
+                requirements
+              </td>
+            </tr>
+            <tr>
+              <td><code>general</code></td>
+              <td>
+                Age of documents, loan exposure limits, exceptions policy, general underwriting
+                philosophy
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h3>chunk_type Enum</h3>
+        <div class="card-grid">
+          <div class="card">
+            <h4>definition</h4>
+            <p>
+              Defines a term or classification. Example: "A First Time Homebuyer is a borrower who
+              has not had ownership interest in a residential property in the past 3 years."
+            </p>
+          </div>
+          <div class="card">
+            <h4>rule</h4>
+            <p>
+              Binary or conditional underwriting rule. Example: "Chapter 7 bankruptcy requires 48
+              months seasoning from discharge date."
+            </p>
+          </div>
+          <div class="card">
+            <h4>calculation</h4>
+            <p>
+              Numerical methodology. Example: "Asset Utilization = Eligible Assets / 84 months =
+              monthly qualifying income."
+            </p>
+          </div>
+          <div class="card">
+            <h4>table_prose</h4>
+            <p>
+              Prose accompanying matrix tables &mdash; footnotes, general requirements sections,
+              eligibility condition paragraphs from matrix PDFs.
+            </p>
+          </div>
+          <div class="card">
+            <h4>exception</h4>
+            <p>When exceptions can be made and what approval is required.</p>
+          </div>
+          <div class="card">
+            <h4>restriction</h4>
+            <p>Ineligibility statements, prohibited transaction or property types.</p>
+          </div>
+        </div>
+
+        <h3>Payload Index Creation</h3>
+        <pre><span class="cm"># Create all payload indexes</span>
+<span class="kw">for</span> field, schema <span class="kw">in</span> [
+    (<span class="str">"lender_id"</span>,        models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"program_ids"</span>,       models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"section_type"</span>,      models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"topic_tags"</span>,        models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"doc_type_context"</span>,  models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"occupancy_context"</span>, models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"chunk_type"</span>,        models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"effective_date"</span>,    models.PayloadSchemaType.KEYWORD),
+    (<span class="str">"is_superseded"</span>,     models.PayloadSchemaType.BOOL),
+    (<span class="str">"chunk_id"</span>,          models.PayloadSchemaType.KEYWORD),
+]:
+    client.create_payload_index(
+        collection_name=<span class="str">"mortgage_guidelines"</span>,
+        field_name=field,
+        field_schema=schema,
+    )</pre>
+
+        <h3>Example Searches</h3>
+        <pre><span class="cm"># How is DSCR calculated for an IO loan?</span>
+client.search(
+    collection_name=<span class="str">"mortgage_guidelines"</span>,
+    query_vector=embed(<span class="str">"DSCR calculation interest only IO loan"</span>),
+    query_filter=models.Filter(must=[
+        models.FieldCondition(key=<span class="str">"lender_id"</span>,
+            match=models.MatchValue(value=<span class="str">"NQM"</span>)),
+        models.FieldCondition(key=<span class="str">"section_type"</span>,
+            match=models.MatchValue(value=<span class="str">"income_dscr"</span>)),
+        models.FieldCondition(key=<span class="str">"is_superseded"</span>,
+            match=models.MatchValue(value=<span class="kw">False</span>)),
+    ]),
+    limit=<span class="num">5</span>, with_payload=<span class="kw">True</span>,
+)
+
+<span class="cm"># Bankruptcy seasoning rules for a specific DH program</span>
+client.search(
+    collection_name=<span class="str">"mortgage_guidelines"</span>,
+    query_vector=embed(<span class="str">"bankruptcy seasoning discharge date chapter 7"</span>),
+    query_filter=models.Filter(must=[
+        models.FieldCondition(key=<span class="str">"lender_id"</span>,
+            match=models.MatchValue(value=<span class="str">"DEEPHAVEN"</span>)),
+        models.FieldCondition(key=<span class="str">"section_type"</span>,
+            match=models.MatchValue(value=<span class="str">"credit"</span>)),
+        models.FieldCondition(key=<span class="str">"program_ids"</span>,
+            match=models.MatchAny(any=[<span class="str">"DH_EXPANDED_PRIME"</span>, <span class="str">""</span>])),
+        models.FieldCondition(key=<span class="str">"is_superseded"</span>,
+            match=models.MatchValue(value=<span class="kw">False</span>)),
+    ]),
+    limit=<span class="num">4</span>,
+)
+
+<span class="cm"># Cross-lender query: bank statement expense factor methodology</span>
+client.search(
+    collection_name=<span class="str">"mortgage_guidelines"</span>,
+    query_vector=embed(<span class="str">"bank statement expense factor personal business income"</span>),
+    query_filter=models.Filter(must=[
+        models.FieldCondition(key=<span class="str">"section_type"</span>,
+            match=models.MatchValue(value=<span class="str">"income_alt_doc"</span>)),
+        models.FieldCondition(key=<span class="str">"doc_type_context"</span>,
+            match=models.MatchAny(any=[<span class="str">"bank_stmt_12"</span>,<span class="str">"bank_stmt_24"</span>])),
+        models.FieldCondition(key=<span class="str">"is_superseded"</span>,
+            match=models.MatchValue(value=<span class="kw">False</span>)),
+    ]),
+    limit=<span class="num">6</span>,
+)</pre>
+      </section>
+
+      <!-- ===================== THREE-WAY SPLIT RULE ===================== -->
+      <section id="three-way-split" class="section">
+        <h2>Three-Way Data Split Rule</h2>
+
+        <div class="three-col">
+          <div class="card">
+            <h3>MySQL <code>programs</code></h3>
+            <p><strong>Binary eligibility gates</strong></p>
+            <ul>
+              <li>FICO min / max</li>
+              <li>Loan amount min / max</li>
+              <li>Max DTI %</li>
+              <li>FTHB eligible (boolean + loan cap)</li>
+              <li>IO eligible (boolean + FICO + LTV)</li>
+              <li>Entity vesting eligible</li>
+              <li>Credit event seasoning months</li>
+              <li>Occupancy types allowed (JSON array)</li>
+              <li>Doc types allowed (JSON array)</li>
+              <li>Citizenship flags (boolean per type)</li>
+              <li>DSCR minimum value</li>
+              <li>STR eligible + conditions</li>
+              <li>Max financed properties</li>
+              <li>Residual income floor $</li>
+              <li>Housing history code</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>MySQL <code>doc_requirements</code> <span class="badge badge-new">NEW</span></h3>
+            <p><strong>Documentation checklist output</strong></p>
+            <ul>
+              <li>W-2s (# years)</li>
+              <li>Paystubs (# days)</li>
+              <li>Tax returns (# years, personal + business)</li>
+              <li>Bank statements (# months, personal vs business)</li>
+              <li>P&amp;L statement format</li>
+              <li>WVOE form requirements</li>
+              <li>Lease agreements</li>
+              <li>DSCR rental documentation (1007/216)</li>
+              <li>Reserve sourcing documents</li>
+              <li>Gift fund letter + sourcing</li>
+              <li>ITIN-specific documents</li>
+              <li>FN-specific documents (visa, OFAC)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Qdrant <code>mortgage_guidelines</code></h3>
+            <p><strong>Complex conditional prose</strong></p>
+            <ul>
+              <li>Bank statement expense factor calculation</li>
+              <li>DSCR calc: IO (ITIA) vs amortizing (PITIA)</li>
+              <li>STR income (AirDNA vs lease vs appraiser)</li>
+              <li>Bankruptcy chapter-by-chapter rules</li>
+              <li>Employment gap underwriting</li>
+              <li>Non-traditional credit evaluation</li>
+              <li>Cash-out seasoning nuances</li>
+              <li>Delayed financing exception requirements</li>
+              <li>Declining market adjustment rules</li>
+              <li>Mixed-use income analysis</li>
+              <li>Asset depletion / utilization formula</li>
+              <li>FTHB definition edge cases</li>
+              <li>Condo warrantability requirements</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Decision Flowchart</h3>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div>
+              Is it a <strong>yes/no flag</strong> or a <strong>single number</strong> that maps
+              directly to program eligibility? &rarr;
+              <span class="badge badge-mysql">MySQL programs</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div>
+              Is it a <strong>list of documents</strong> to submit for a given doc type + employment
+              type? &rarr; <span class="badge badge-mysql">MySQL doc_requirements</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div>
+              Is it a <strong>structured LTV grid</strong> (FICO x loan amt x occupancy x doc type)?
+              &rarr; <span class="badge badge-mysql">MySQL ltv_matrix</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div>
+              Is it a <strong>geographic restriction</strong> by state / county / city? &rarr;
+              <span class="badge badge-mysql">MySQL geographic_restrictions</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div>
+              Is it a <strong>tiered LTV reduction</strong> by credit event seasoning months? &rarr;
+              <span class="badge badge-mysql">MySQL credit_event_tiers</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">6</div>
+            <div>
+              <strong>Everything else</strong>: explanatory prose, conditional logic, methodology,
+              nuance &rarr; <span class="badge badge-qdrant">Qdrant</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ETL NOTES ===================== -->
+      <section id="etl" class="section">
+        <h2>ETL Processing Notes</h2>
+
+        <div class="card">
+          <h3>Matrix PDF &rarr; MySQL Extraction</h3>
+          <h4>LTV Matrix Parsing Strategy</h4>
+          <p>
+            Each program matrix is a 2D grid where rows = FICO bands / loan amount ranges and
+            columns = occupancy types x doc types. The parser must:
+          </p>
+          <ol>
+            <li>
+              Identify the header row to determine column &rarr; (occupancy, doc_type) mapping
+            </li>
+            <li>
+              Parse each data row into (fico_min, fico_max, loan_amt_min, loan_amt_max) from the row
+              label
+            </li>
+            <li>
+              Extract the LTV value for each column intersection &rarr; one
+              <code>ltv_matrix</code> row per cell
+            </li>
+            <li>Detect and handle LTV reductions noted in footnotes (IO, STR, state overlays)</li>
+            <li>
+              Insert separate rows for state-overlay LTV caps (e.g., Verus CT/FL/IL/NJ/NY overlays)
+            </li>
+            <li>
+              Flag programs with tiered credit event rules &rarr; insert rows into
+              <code>credit_event_tiers</code>
+            </li>
+          </ol>
+          <h4>Program-Level Flag Extraction</h4>
+          <p>
+            Matrix "General Requirements" and "Borrower Eligibility" sections at the bottom of each
+            program page contain program-level flags. Parse these as key-value pairs into the
+            <code>programs</code> table. Items that cannot be reduced to a boolean or number go to
+            Qdrant instead.
+          </p>
+          <div class="warn">
+            Verus Prime Ascent has tiered credit event LTV reductions embedded inside the matrix
+            cells. These produce <code>credit_event_tiers</code> rows rather than separate
+            <code>ltv_matrix</code> rows.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Guideline PDF &rarr; Qdrant Chunking</h3>
+          <h4>Chunking Rules</h4>
+          <ul>
+            <li>
+              <strong>Target size:</strong> 400&ndash;900 tokens per chunk. Preserve complete
+              paragraphs.
+            </li>
+            <li>
+              <strong>Chunk boundaries:</strong> Always break at section headings. Never
+              mid-sentence.
+            </li>
+            <li>
+              <strong>Overlap:</strong> 50-token sliding overlap between adjacent chunks within a
+              section.
+            </li>
+            <li>
+              <strong>Heading inheritance:</strong> Each chunk carries full breadcrumb
+              <code>heading_path</code>.
+            </li>
+            <li>
+              <strong>Table handling:</strong> Convert inline tables to prose or markdown before
+              embedding. Do not embed raw PDF coordinates.
+            </li>
+            <li>
+              <strong>Program specificity:</strong> If section header names a specific program, set
+              <code>program_ids</code> to that program only. If section is general, set
+              <code>program_ids</code> to empty array (applies to all lender programs).
+            </li>
+          </ul>
+          <h4>Guideline Section &rarr; section_type Mapping</h4>
+          <div class="tbl-wrap">
+            <table>
+              <tr>
+                <th>Guideline Section</th>
+                <th>section_type</th>
+                <th>Key topic_tags</th>
+              </tr>
+              <tr>
+                <td>Credit Report / Qualifying Score / Tradelines</td>
+                <td>credit</td>
+                <td>credit_report, qualifying_score, tradeline, limited_credit, non_traditional</td>
+              </tr>
+              <tr>
+                <td>Housing History / Rolling Lates / Past Due</td>
+                <td>credit</td>
+                <td>housing_history, 30_day_late, rolling_lates, mortgage_lates</td>
+              </tr>
+              <tr>
+                <td>Bankruptcy (all chapters)</td>
+                <td>credit</td>
+                <td>bankruptcy, chapter_7, chapter_13, chapter_11, discharge, seasoning</td>
+              </tr>
+              <tr>
+                <td>Foreclosure / Short Sale / DIL</td>
+                <td>credit</td>
+                <td>foreclosure, short_sale, deed_in_lieu, credit_event, seasoning</td>
+              </tr>
+              <tr>
+                <td>Employment / W-2 / Self-Employed / Gaps</td>
+                <td>income_full_doc</td>
+                <td>w2, paystubs, self_employed, employment_gap, 2yr_history</td>
+              </tr>
+              <tr>
+                <td>Bank Statement Income</td>
+                <td>income_alt_doc</td>
+                <td>bank_statement, 12mo, 24mo, expense_factor, personal, business</td>
+              </tr>
+              <tr>
+                <td>P&amp;L / WVOE / Asset Utilization</td>
+                <td>income_alt_doc</td>
+                <td>pl_only, wvoe, asset_utilization, asset_depletion, 60_months, 84_months</td>
+              </tr>
+              <tr>
+                <td>Rental Income / DSCR Calculation</td>
+                <td>income_dscr</td>
+                <td>
+                  dscr, rental_income, gross_rents, pitia, itia, io_dscr, str_income, market_rent
+                </td>
+              </tr>
+              <tr>
+                <td>Borrower Citizenship / ITIN / FN / DACA</td>
+                <td>borrower_eligibility</td>
+                <td>citizenship, itin, foreign_national, daca, pra, non_pra, ofac</td>
+              </tr>
+              <tr>
+                <td>FTHB / First Time Investor</td>
+                <td>borrower_eligibility</td>
+                <td>fthb, first_time_homebuyer, first_time_investor</td>
+              </tr>
+              <tr>
+                <td>Vesting / Entity / Leasehold</td>
+                <td>borrower_eligibility</td>
+                <td>entity_vesting, llc, trust, leasehold, personal_guarantor</td>
+              </tr>
+              <tr>
+                <td>Purchase / Rate-Term / Cash-Out</td>
+                <td>transaction</td>
+                <td>purchase, rate_term, cash_out, delayed_financing, seasoning</td>
+              </tr>
+              <tr>
+                <td>Property Types / Condo / Rural</td>
+                <td>property</td>
+                <td>condo, warrantability, condotel, rural, acreage, mixed_use</td>
+              </tr>
+              <tr>
+                <td>Reserves / Asset Sourcing / Gift Funds</td>
+                <td>assets_reserves</td>
+                <td>reserves, seasoning, gift_funds, retirement_assets, asset_sourcing</td>
+              </tr>
+              <tr>
+                <td>HPML / High-Cost / Prepayment</td>
+                <td>compliance</td>
+                <td>hpml, high_cost, prepayment_penalty, ny_subprime</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CHATBOT FLOW ===================== -->
+      <section id="chatbot-flow" class="section">
+        <h2>Chatbot Conversation Flow</h2>
+
+        <div class="card">
+          <h3>Phase 1 &mdash; Eligibility Screening (MySQL)</h3>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div>
+              <strong>Loan purpose</strong> &mdash; purchase / rate-term refi / cash-out refi
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div>
+              <strong>Property state</strong> &rarr; immediately query
+              <code>geographic_restrictions</code> to eliminate ineligible programs
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div><strong>Occupancy</strong> &mdash; primary / second home / investment</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div>
+              <strong>Property type + units</strong> &mdash; SFR / condo / 2-4 unit / 5-8 unit /
+              mixed use
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div>
+              <strong>Loan amount</strong> &rarr; filter by <code>programs.loan_amt_min</code> and
+              <code>programs.loan_amt_max</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">6</div>
+            <div>
+              <strong>FICO score</strong> &rarr; filter by <code>programs.fico_min</code> and
+              <code>programs.fico_max</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">7</div>
+            <div>
+              <strong>DSCR?</strong> If investment property: ask for rents vs PITI or known DSCR
+              value &rarr; filter DSCR programs by <code>dscr_min</code> and
+              <code>dscr_allows_below_one</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">8</div>
+            <div>
+              <strong>Doc type</strong> &mdash; full doc / bank stmt / P&amp;L / WVOE / asset util
+              &rarr; filter by <code>programs.doc_types_allowed</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">9</div>
+            <div>
+              <strong>Borrower type</strong> &mdash; US citizen / PRA / ITIN / FN / DACA &rarr;
+              filter by citizenship flags
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">10</div>
+            <div>
+              <strong>Credit event?</strong> BK / FC / SS / DIL + months ago &rarr; check
+              <code>programs.credit_event_seasoning_months</code> and
+              <code>credit_event_tiers</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">11</div>
+            <div>
+              <strong>Housing lates?</strong> &rarr; check
+              <code>programs.housing_history_code</code> &rarr; compute LTV reduction if applicable
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">12</div>
+            <div>
+              <strong>FTHB?</strong> / <strong>First time investor?</strong> &rarr; apply flag
+              filters and loan cap
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">13</div>
+            <div>
+              <strong>IO requested?</strong> &rarr; filter by <code>io_eligible</code> /
+              <code>io_min_fico</code> / <code>io_max_ltv</code>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">14</div>
+            <div>
+              <strong>Entity vesting?</strong> / <strong>Lender preference?</strong> &rarr; final
+              filters
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">15</div>
+            <div>
+              Query <code>ltv_matrix</code> for max LTV given all inputs &rarr; present matching
+              programs with max LTV to borrower
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Phase 2 &mdash; Documentation Checklist (MySQL doc_requirements)</h3>
+          <p>
+            Once the program is selected, query <code>doc_requirements</code> for the borrower's
+            (doc_type, borrower_type) combination. Return the JSON document checklist as a formatted
+            list.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Phase 3 &mdash; Guideline Q&amp;A (Qdrant RAG)</h3>
+          <p>
+            Borrower or LO has follow-up questions. Use matched program(s) from Phase 1 to scope the
+            Qdrant search:
+          </p>
+          <ul>
+            <li>Filter by <code>lender_id</code> of the winning program</li>
+            <li>
+              Filter by <code>program_ids</code> containing the winning program code (or empty =
+              all-lender chunks)
+            </li>
+            <li>Always filter <code>is_superseded = false</code></li>
+            <li>Classify question topic &rarr; add <code>section_type</code> filter</li>
+            <li>Return top-K chunks &rarr; pass to LLM with system prompt for answer synthesis</li>
+            <li>
+              Include <code>source_file</code> + <code>page_number</code> in response for LO
+              citation reference
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="divider" />
+      <p class="meta" style="text-align: center">
+        NewPoint Mortgage Chatbot Blueprint &middot; Generated May 2026 &middot; 3 Lenders &middot;
+        28 Programs &middot; MySQL + Qdrant
+      </p>
+    </div>
+    <!-- .wrap -->
+  </body>
+</html>

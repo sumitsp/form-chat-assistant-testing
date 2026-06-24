@@ -1,0 +1,699 @@
+<?xml version="1.0"?>
+<MESSAGE xmlns:DU="http://www.datamodelextension.org/Schema/DU" xmlns:ULAD="http://www.datamodelextension.org/Schema/ULAD" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" MISMOReferenceModelIdentifier="3.4.032420160128" xmlns="http://www.mismo.org/residential/2009/schemas">
+  <ABOUT_VERSIONS>
+    <ABOUT_VERSION>
+      <AboutVersionIdentifier>DU Spec 1.8.5</AboutVersionIdentifier>
+      <CreatedDatetime>2026-05-22T06:15:59Z</CreatedDatetime>
+    </ABOUT_VERSION>
+  </ABOUT_VERSIONS>
+  <DEAL_SETS>
+    <DEAL_SET>
+      <DEALS>
+        <DEAL>
+          <ASSETS>
+            <ASSET SequenceNumber="1" xlink:label="ASSET_1">
+              <ASSET_DETAIL>
+                <AssetAccountIdentifier>7916500510</AssetAccountIdentifier>
+                <AssetCashOrMarketValueAmount>5918.94</AssetCashOrMarketValueAmount>
+                <AssetType>SavingsAccount</AssetType>
+              </ASSET_DETAIL>
+              <ASSET_HOLDER>
+                <NAME>
+                  <FullName>Wells Fargo</FullName>
+                </NAME>
+              </ASSET_HOLDER>
+            </ASSET>
+            <ASSET SequenceNumber="2" xlink:label="ASSET_2">
+              <ASSET_DETAIL>
+                <AssetAccountIdentifier>1950908200</AssetAccountIdentifier>
+                <AssetCashOrMarketValueAmount>15700.04</AssetCashOrMarketValueAmount>
+                <AssetType>CheckingAccount</AssetType>
+              </ASSET_DETAIL>
+              <ASSET_HOLDER>
+                <NAME>
+                  <FullName>Wells Fargo</FullName>
+                </NAME>
+              </ASSET_HOLDER>
+            </ASSET>
+            <ASSET SequenceNumber="3" xlink:label="ASSET_3">
+              <ASSET_DETAIL>
+                <AssetAccountIdentifier>9840333224</AssetAccountIdentifier>
+                <AssetCashOrMarketValueAmount>16082.95</AssetCashOrMarketValueAmount>
+                <AssetType>CheckingAccount</AssetType>
+              </ASSET_DETAIL>
+              <ASSET_HOLDER>
+                <NAME>
+                  <FullName>Wells Fargo</FullName>
+                </NAME>
+              </ASSET_HOLDER>
+            </ASSET>
+            <ASSET SequenceNumber="4" xlink:label="ASSET_4">
+              <ASSET_DETAIL>
+                <AssetAccountIdentifier>5711795723</AssetAccountIdentifier>
+                <AssetCashOrMarketValueAmount>4984.86</AssetCashOrMarketValueAmount>
+                <AssetType>SavingsAccount</AssetType>
+              </ASSET_DETAIL>
+              <ASSET_HOLDER>
+                <NAME>
+                  <FullName>Wells Fargo</FullName>
+                </NAME>
+              </ASSET_HOLDER>
+            </ASSET>
+            <ASSET SequenceNumber="5" xlink:label="ASSET_5">
+              <ASSET_DETAIL>
+                <AssetAccountIdentifier>2258799648</AssetAccountIdentifier>
+                <AssetCashOrMarketValueAmount>13630.49</AssetCashOrMarketValueAmount>
+                <AssetType>CheckingAccount</AssetType>
+              </ASSET_DETAIL>
+              <ASSET_HOLDER>
+                <NAME>
+                  <FullName>Wells Fargo</FullName>
+                </NAME>
+              </ASSET_HOLDER>
+            </ASSET>
+            <ASSET SequenceNumber="6" xlink:label="ASSET_6">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>209384</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>19315 Day Street</AddressLineText>
+                    <CityName>Perris</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>92570</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>PrimaryResidence</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>700000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>PrimaryResidence</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+            <ASSET SequenceNumber="7" xlink:label="ASSET_7">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>80079</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertyRentalIncomeGrossAmount>2200</OwnedPropertyRentalIncomeGrossAmount>
+                  <OwnedPropertyRentalIncomeNetAmount>170</OwnedPropertyRentalIncomeNetAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>20060 Lee Road</AddressLineText>
+                    <CityName>Perris</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>92570</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>Investment</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>500000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>Investment</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+            <ASSET SequenceNumber="8" xlink:label="ASSET_8">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>153643</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertyRentalIncomeGrossAmount>3445</OwnedPropertyRentalIncomeGrossAmount>
+                  <OwnedPropertyRentalIncomeNetAmount>978.75</OwnedPropertyRentalIncomeNetAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>20262 Jefferson Street</AddressLineText>
+                    <CityName>Perris</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>92570</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>Investment</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>400000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>Investment</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+            <ASSET SequenceNumber="9" xlink:label="ASSET_9">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>0</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertyRentalIncomeGrossAmount>1875</OwnedPropertyRentalIncomeGrossAmount>
+                  <OwnedPropertyRentalIncomeNetAmount>1406.25</OwnedPropertyRentalIncomeNetAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>6603 San Juan Street</AddressLineText>
+                    <CityName>Paramount</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>90723</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>Investment</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>500000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>Investment</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+            <ASSET SequenceNumber="10" xlink:label="ASSET_10">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>183173</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertyRentalIncomeGrossAmount>2335</OwnedPropertyRentalIncomeGrossAmount>
+                  <OwnedPropertyRentalIncomeNetAmount>274.25</OwnedPropertyRentalIncomeNetAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>14512 San Jose Avenue</AddressLineText>
+                    <CityName>Paramount</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>90723</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>Investment</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>740000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>Investment</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+            <ASSET SequenceNumber="11" xlink:label="ASSET_11">
+              <OWNED_PROPERTY>
+                <OWNED_PROPERTY_DETAIL>
+                  <OwnedPropertyDispositionStatusType>Retain</OwnedPropertyDispositionStatusType>
+                  <OwnedPropertyLienUPBAmount>0</OwnedPropertyLienUPBAmount>
+                  <OwnedPropertyMaintenanceExpenseAmount>0</OwnedPropertyMaintenanceExpenseAmount>
+                  <OwnedPropertyRentalIncomeGrossAmount>1800</OwnedPropertyRentalIncomeGrossAmount>
+                  <OwnedPropertyRentalIncomeNetAmount>1350</OwnedPropertyRentalIncomeNetAmount>
+                  <OwnedPropertySubjectIndicator>false</OwnedPropertySubjectIndicator>
+                </OWNED_PROPERTY_DETAIL>
+                <PROPERTY>
+                  <ADDRESS>
+                    <AddressLineText>21251 Rider Street</AddressLineText>
+                    <CityName>Perris</CityName>
+                    <CountryCode>US</CountryCode>
+                    <PostalCode>92570</PostalCode>
+                    <StateCode>CA</StateCode>
+                  </ADDRESS>
+                  <PROPERTY_DETAIL>
+                    <PropertyCurrentUsageType>Investment</PropertyCurrentUsageType>
+                    <PropertyEstimatedValueAmount>280000</PropertyEstimatedValueAmount>
+                    <PropertyUsageType>Investment</PropertyUsageType>
+                  </PROPERTY_DETAIL>
+                </PROPERTY>
+              </OWNED_PROPERTY>
+            </ASSET>
+          </ASSETS>
+          <COLLATERALS>
+            <COLLATERAL>
+              <SUBJECT_PROPERTY>
+                <ADDRESS>
+                  <AddressLineText>26458 Larkspur Street</AddressLineText>
+                  <CityName>Hemet</CityName>
+                  <CountyName>Riverside</CountyName>
+                  <PostalCode>92544</PostalCode>
+                  <StateCode>CA</StateCode>
+                </ADDRESS>
+                <LOCATION_IDENTIFIER>
+                  <FIPS_INFORMATION>
+                    <FIPSCountyCode>065</FIPSCountyCode>
+                    <FIPSStateNumericCode>06</FIPSStateNumericCode>
+                  </FIPS_INFORMATION>
+                </LOCATION_IDENTIFIER>
+                <PROPERTY_DETAIL>
+                  <AttachmentType>Detached</AttachmentType>
+                  <CommunityPropertyStateIndicator>false</CommunityPropertyStateIndicator>
+                  <ConstructionMethodType>SiteBuilt</ConstructionMethodType>
+                  <FinancedUnitCount>1</FinancedUnitCount>
+                  <PropertyEstateType>FeeSimple</PropertyEstateType>
+                  <PropertyExistingCleanEnergyLienIndicator>false</PropertyExistingCleanEnergyLienIndicator>
+                  <PropertyInProjectIndicator>false</PropertyInProjectIndicator>
+                  <PropertyMixedUsageIndicator>false</PropertyMixedUsageIndicator>
+                  <PropertyStructureBuiltYear>1976</PropertyStructureBuiltYear>
+                  <PropertyUsageType>Investment</PropertyUsageType>
+                  <PUDIndicator>false</PUDIndicator>
+                  <RentalEstimatedNetMonthlyRentAmount>-2429.21</RentalEstimatedNetMonthlyRentAmount>
+                </PROPERTY_DETAIL>
+                <PROPERTY_VALUATIONS>
+                  <PROPERTY_VALUATION>
+                    <PROPERTY_VALUATION_DETAIL>
+                      <PropertyValuationAmount>482000</PropertyValuationAmount>
+                    </PROPERTY_VALUATION_DETAIL>
+                  </PROPERTY_VALUATION>
+                </PROPERTY_VALUATIONS>
+                <SALES_CONTRACTS>
+                  <SALES_CONTRACT>
+                    <SALES_CONCESSIONS>
+                      <SALES_CONCESSION>
+                        <SalesConcessionAmount>0</SalesConcessionAmount>
+                      </SALES_CONCESSION>
+                    </SALES_CONCESSIONS>
+                    <SALES_CONTRACT_DETAIL>
+                      <SalesContractAmount>482216</SalesContractAmount>
+                    </SALES_CONTRACT_DETAIL>
+                  </SALES_CONTRACT>
+                </SALES_CONTRACTS>
+              </SUBJECT_PROPERTY>
+            </COLLATERAL>
+          </COLLATERALS>
+          <LIABILITIES>
+            <LIABILITY SequenceNumber="1" xlink:label="LIABILITY_1">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>3104012787562</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>1360</LiabilityMonthlyPaymentAmount>
+                <LiabilityPaymentIncludesTaxesInsuranceIndicator>false</LiabilityPaymentIncludesTaxesInsuranceIndicator>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>0</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>MortgageLoan</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>209384</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>BMO BANK NA</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY SequenceNumber="2" xlink:label="LIABILITY_2">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>742291982</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>1480</LiabilityMonthlyPaymentAmount>
+                <LiabilityPaymentIncludesTaxesInsuranceIndicator>false</LiabilityPaymentIncludesTaxesInsuranceIndicator>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>176</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>MortgageLoan</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>80079</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>NATIONSTAR/MR COOPER</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY SequenceNumber="3" xlink:label="LIABILITY_3">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>9360551141831</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>1605</LiabilityMonthlyPaymentAmount>
+                <LiabilityPaymentIncludesTaxesInsuranceIndicator>false</LiabilityPaymentIncludesTaxesInsuranceIndicator>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>175</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>MortgageLoan</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>153643</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>WFBNA HL</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY SequenceNumber="4" xlink:label="LIABILITY_4">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>3101506736527</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>1477</LiabilityMonthlyPaymentAmount>
+                <LiabilityPaymentIncludesTaxesInsuranceIndicator>false</LiabilityPaymentIncludesTaxesInsuranceIndicator>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>339</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>MortgageLoan</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>183173</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>BMO BANK NA</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY SequenceNumber="5" xlink:label="LIABILITY_5">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>51084220001</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>702</LiabilityMonthlyPaymentAmount>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>48</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>Installment</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>27221</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>GLOBAL FCU</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY SequenceNumber="6" xlink:label="LIABILITY_6">
+              <LIABILITY_DETAIL>
+                <LiabilityAccountIdentifier>6034620258584293</LiabilityAccountIdentifier>
+                <LiabilityExclusionIndicator>false</LiabilityExclusionIndicator>
+                <LiabilityMonthlyPaymentAmount>48</LiabilityMonthlyPaymentAmount>
+                <LiabilityPayoffStatusIndicator>false</LiabilityPayoffStatusIndicator>
+                <LiabilityRemainingTermMonthsCount>0</LiabilityRemainingTermMonthsCount>
+                <LiabilityType>Revolving</LiabilityType>
+                <LiabilityUnpaidBalanceAmount>48</LiabilityUnpaidBalanceAmount>
+              </LIABILITY_DETAIL>
+              <LIABILITY_HOLDER>
+                <NAME>
+                  <FullName>SYNCB/HOME DESIGN-HI-P</FullName>
+                </NAME>
+              </LIABILITY_HOLDER>
+            </LIABILITY>
+            <LIABILITY_SUMMARY>
+              <TotalNonSubjectPropertyDebtsToBePaidOffAmount>0</TotalNonSubjectPropertyDebtsToBePaidOffAmount>
+              <TotalSubjectPropertyPayoffsAndPaymentsAmount>0</TotalSubjectPropertyPayoffsAndPaymentsAmount>
+            </LIABILITY_SUMMARY>
+          </LIABILITIES>
+          <LOANS>
+            <LOAN SequenceNumber="1" LoanRoleType="SubjectLoan" xlink:label="LOAN_1">
+              <AMORTIZATION>
+                <AMORTIZATION_RULE>
+                  <AmortizationType>Fixed</AmortizationType>
+                  <LoanAmortizationPeriodCount>180</LoanAmortizationPeriodCount>
+                  <LoanAmortizationPeriodType>Month</LoanAmortizationPeriodType>
+                </AMORTIZATION_RULE>
+              </AMORTIZATION>
+              <CLOSING_INFORMATION>
+                <CLOSING_INFORMATION_DETAIL>
+                  <CashFromBorrowerAtClosingAmount>240252.10</CashFromBorrowerAtClosingAmount>
+                </CLOSING_INFORMATION_DETAIL>
+              </CLOSING_INFORMATION>
+              <DOCUMENT_SPECIFIC_DATA_SETS>
+                <DOCUMENT_SPECIFIC_DATA_SET>
+                  <URLA>
+                    <URLA_DETAIL>
+                      <AlterationsImprovementsAndRepairsAmount>0</AlterationsImprovementsAndRepairsAmount>
+                      <EstimatedClosingCostsAmount>2536.10</EstimatedClosingCostsAmount>
+                      <MIAndFundingFeeFinancedAmount>0</MIAndFundingFeeFinancedAmount>
+                      <MIAndFundingFeeTotalAmount>0</MIAndFundingFeeTotalAmount>
+                    </URLA_DETAIL>
+                    <URLA_TOTAL>
+                      <EXTENSION>
+                        <OTHER>
+                          <ULAD:URLA_TOTAL_EXTENSION>
+                            <ULAD:URLATotalSellerCreditsAmount>7500</ULAD:URLATotalSellerCreditsAmount>
+                          </ULAD:URLA_TOTAL_EXTENSION>
+                        </OTHER>
+                      </EXTENSION>
+                    </URLA_TOTAL>
+                  </URLA>
+                </DOCUMENT_SPECIFIC_DATA_SET>
+              </DOCUMENT_SPECIFIC_DATA_SETS>
+              <HMDA_LOAN>
+                <HMDA_LOAN_DETAIL>
+                  <HMDA_HOEPALoanStatusIndicator>false</HMDA_HOEPALoanStatusIndicator>
+                </HMDA_LOAN_DETAIL>
+              </HMDA_LOAN>
+              <HOUSING_EXPENSES>
+                <HOUSING_EXPENSE>
+                  <HousingExpensePaymentAmount>2085.15</HousingExpensePaymentAmount>
+                  <HousingExpenseTimingType>Proposed</HousingExpenseTimingType>
+                  <HousingExpenseType>FirstMortgagePrincipalAndInterest</HousingExpenseType>
+                </HOUSING_EXPENSE>
+                <HOUSING_EXPENSE>
+                  <HousingExpensePaymentAmount>109.92</HousingExpensePaymentAmount>
+                  <HousingExpenseTimingType>Proposed</HousingExpenseTimingType>
+                  <HousingExpenseType>HomeownersInsurance</HousingExpenseType>
+                </HOUSING_EXPENSE>
+                <HOUSING_EXPENSE>
+                  <HousingExpensePaymentAmount>234.14</HousingExpensePaymentAmount>
+                  <HousingExpenseTimingType>Proposed</HousingExpenseTimingType>
+                  <HousingExpenseType>RealEstateTax</HousingExpenseType>
+                </HOUSING_EXPENSE>
+              </HOUSING_EXPENSES>
+              <LOAN_DETAIL>
+                <BalloonIndicator>false</BalloonIndicator>
+                <BelowMarketSubordinateFinancingIndicator>false</BelowMarketSubordinateFinancingIndicator>
+                <BorrowerCount>1</BorrowerCount>
+                <BuydownTemporarySubsidyFundingIndicator>false</BuydownTemporarySubsidyFundingIndicator>
+                <ConstructionLoanIndicator>false</ConstructionLoanIndicator>
+                <ConversionOfContractForDeedIndicator>false</ConversionOfContractForDeedIndicator>
+                <EnergyRelatedImprovementsIndicator>false</EnergyRelatedImprovementsIndicator>
+                <InterestOnlyIndicator>false</InterestOnlyIndicator>
+                <NegativeAmortizationIndicator>false</NegativeAmortizationIndicator>
+                <PrepaymentPenaltyIndicator>false</PrepaymentPenaltyIndicator>
+                <RenovationLoanIndicator>false</RenovationLoanIndicator>
+                <TotalMortgagedPropertiesCount>5</TotalMortgagedPropertiesCount>
+                <TotalSubordinateFinancingAmount>0</TotalSubordinateFinancingAmount>
+              </LOAN_DETAIL>
+              <LOAN_IDENTIFIERS>
+                <LOAN_IDENTIFIER>
+                  <LoanIdentifier>2508003R</LoanIdentifier>
+                  <LoanIdentifierType>LenderLoan</LoanIdentifierType>
+                </LOAN_IDENTIFIER>
+              </LOAN_IDENTIFIERS>
+              <LOAN_PRODUCT>
+                <LOAN_PRODUCT_DETAIL>
+                  <DiscountPointsTotalAmount>0</DiscountPointsTotalAmount>
+                </LOAN_PRODUCT_DETAIL>
+              </LOAN_PRODUCT>
+              <ORIGINATION_SYSTEMS>
+                <ORIGINATION_SYSTEM>
+                  <LoanOriginationSystemLoanIdentifier>29fa6318-6b40-4841-bbcd-1d7b988559ec</LoanOriginationSystemLoanIdentifier>
+                  <LoanOriginationSystemName>LendingPad</LoanOriginationSystemName>
+                </ORIGINATION_SYSTEM>
+              </ORIGINATION_SYSTEMS>
+              <PURCHASE_CREDITS>
+                <PURCHASE_CREDIT>
+                  <PurchaseCreditAmount>5000</PurchaseCreditAmount>
+                  <PurchaseCreditType>EarnestMoney</PurchaseCreditType>
+                </PURCHASE_CREDIT>
+                <PURCHASE_CREDIT />
+              </PURCHASE_CREDITS>
+              <QUALIFICATION />
+              <TERMS_OF_LOAN>
+                <BaseLoanAmount>232000</BaseLoanAmount>
+                <LienPriorityType>FirstLien</LienPriorityType>
+                <LoanPurposeType>Purchase</LoanPurposeType>
+                <MortgageType>Conventional</MortgageType>
+                <NoteAmount>232000</NoteAmount>
+                <NoteRatePercent>6.999</NoteRatePercent>
+              </TERMS_OF_LOAN>
+            </LOAN>
+          </LOANS>
+          <PARTIES>
+            <PARTY>
+              <INDIVIDUAL>
+                <CONTACT_POINTS>
+                  <CONTACT_POINT>
+                    <CONTACT_POINT_EMAIL>
+                      <ContactPointEmailValue>Nevares.fran61@yahoo.com</ContactPointEmailValue>
+                    </CONTACT_POINT_EMAIL>
+                  </CONTACT_POINT>
+                </CONTACT_POINTS>
+                <NAME>
+                  <FirstName>1YR - PPP Fixed</FirstName>
+                  <LastName>TEST</LastName>
+                </NAME>
+              </INDIVIDUAL>
+              <ROLES>
+                <ROLE SequenceNumber="1" xlink:label="BORROWER_1">
+                  <BORROWER>
+                    <BORROWER_DETAIL>
+                      <BorrowerBirthDate>1961-08-21</BorrowerBirthDate>
+                      <CommunityPropertyStateResidentIndicator>false</CommunityPropertyStateResidentIndicator>
+                      <DependentCount>0</DependentCount>
+                      <MaritalStatusType>Married</MaritalStatusType>
+                    </BORROWER_DETAIL>
+                    <CURRENT_INCOME>
+                      <CURRENT_INCOME_ITEMS />
+                    </CURRENT_INCOME>
+                    <DECLARATION>
+                      <DECLARATION_DETAIL>
+                        <BankruptcyIndicator>false</BankruptcyIndicator>
+                        <CitizenshipResidencyType>USCitizen</CitizenshipResidencyType>
+                        <IntentToOccupyType>No</IntentToOccupyType>
+                        <OutstandingJudgmentsIndicator>false</OutstandingJudgmentsIndicator>
+                        <PartyToLawsuitIndicator>false</PartyToLawsuitIndicator>
+                        <PresentlyDelinquentIndicator>false</PresentlyDelinquentIndicator>
+                        <PriorPropertyDeedInLieuConveyedIndicator>false</PriorPropertyDeedInLieuConveyedIndicator>
+                        <PriorPropertyForeclosureCompletedIndicator>false</PriorPropertyForeclosureCompletedIndicator>
+                        <PriorPropertyShortSaleCompletedIndicator>false</PriorPropertyShortSaleCompletedIndicator>
+                        <PropertyProposedCleanEnergyLienIndicator>false</PropertyProposedCleanEnergyLienIndicator>
+                        <UndisclosedBorrowedFundsIndicator>false</UndisclosedBorrowedFundsIndicator>
+                        <UndisclosedComakerOfNoteIndicator>false</UndisclosedComakerOfNoteIndicator>
+                        <UndisclosedCreditApplicationIndicator>false</UndisclosedCreditApplicationIndicator>
+                        <UndisclosedMortgageApplicationIndicator>false</UndisclosedMortgageApplicationIndicator>
+                        <EXTENSION>
+                          <OTHER>
+                            <ULAD:DECLARATION_DETAIL_EXTENSION>
+                              <ULAD:SpecialBorrowerSellerRelationshipIndicator>false</ULAD:SpecialBorrowerSellerRelationshipIndicator>
+                            </ULAD:DECLARATION_DETAIL_EXTENSION>
+                          </OTHER>
+                        </EXTENSION>
+                      </DECLARATION_DETAIL>
+                    </DECLARATION>
+                    <DEPENDENTS />
+                    <EMPLOYERS>
+                      <EMPLOYER SequenceNumber="1" xlink:label="EMPLOYER_1">
+                        <LEGAL_ENTITY>
+                          <LEGAL_ENTITY_DETAIL>
+                            <FullName>TBD</FullName>
+                          </LEGAL_ENTITY_DETAIL>
+                        </LEGAL_ENTITY>
+                        <EMPLOYMENT>
+                          <EmploymentBorrowerSelfEmployedIndicator>false</EmploymentBorrowerSelfEmployedIndicator>
+                          <EmploymentClassificationType>Primary</EmploymentClassificationType>
+                          <EmploymentStatusType>Current</EmploymentStatusType>
+                          <EmploymentTimeInLineOfWorkMonthsCount>0</EmploymentTimeInLineOfWorkMonthsCount>
+                          <SpecialBorrowerEmployerRelationshipIndicator>false</SpecialBorrowerEmployerRelationshipIndicator>
+                          <EXTENSION>
+                            <OTHER>
+                              <DU:EMPLOYMENT_EXTENSION>
+                                <DU:ForeignIncomeIndicator>false</DU:ForeignIncomeIndicator>
+                                <DU:SeasonalIncomeIndicator>false</DU:SeasonalIncomeIndicator>
+                              </DU:EMPLOYMENT_EXTENSION>
+                            </OTHER>
+                          </EXTENSION>
+                        </EMPLOYMENT>
+                      </EMPLOYER>
+                    </EMPLOYERS>
+                    <GOVERNMENT_MONITORING>
+                      <GOVERNMENT_MONITORING_DETAIL>
+                        <HMDAEthnicityRefusalIndicator>false</HMDAEthnicityRefusalIndicator>
+                        <HMDAGenderRefusalIndicator>false</HMDAGenderRefusalIndicator>
+                        <HMDARaceRefusalIndicator>false</HMDARaceRefusalIndicator>
+                      </GOVERNMENT_MONITORING_DETAIL>
+                    </GOVERNMENT_MONITORING>
+                    <RESIDENCES>
+                      <RESIDENCE>
+                        <ADDRESS>
+                          <AddressLineText>19315 Day Street</AddressLineText>
+                          <CityName>Perris</CityName>
+                          <CountryCode>US</CountryCode>
+                          <PostalCode>92570</PostalCode>
+                          <StateCode>CA</StateCode>
+                        </ADDRESS>
+                        <RESIDENCE_DETAIL>
+                          <BorrowerResidencyBasisType>Own</BorrowerResidencyBasisType>
+                          <BorrowerResidencyDurationMonthsCount>175</BorrowerResidencyDurationMonthsCount>
+                          <BorrowerResidencyType>Current</BorrowerResidencyType>
+                        </RESIDENCE_DETAIL>
+                      </RESIDENCE>
+                    </RESIDENCES>
+                  </BORROWER>
+                  <ROLE_DETAIL>
+                    <PartyRoleType>Borrower</PartyRoleType>
+                  </ROLE_DETAIL>
+                </ROLE>
+              </ROLES>
+              <TAXPAYER_IDENTIFIERS>
+                <TAXPAYER_IDENTIFIER>
+                  <TaxpayerIdentifierType>SocialSecurityNumber</TaxpayerIdentifierType>
+                  <TaxpayerIdentifierValue>604077653</TaxpayerIdentifierValue>
+                </TAXPAYER_IDENTIFIER>
+              </TAXPAYER_IDENTIFIERS>
+            </PARTY>
+            <PARTY SequenceNumber="2">
+              <INDIVIDUAL>
+                <NAME>
+                  <FullName>1YR - PPP Fixed TEST</FullName>
+                </NAME>
+              </INDIVIDUAL>
+              <ROLES>
+                <ROLE SequenceNumber="2" xlink:label="PROPERTY_OWNER_1">
+                  <PROPERTY_OWNER>
+                    <PropertyOwnerStatusType>Proposed</PropertyOwnerStatusType>
+                  </PROPERTY_OWNER>
+                  <ROLE_DETAIL>
+                    <PartyRoleType>PropertyOwner</PartyRoleType>
+                  </ROLE_DETAIL>
+                </ROLE>
+              </ROLES>
+            </PARTY>
+            <PARTY SequenceNumber="3">
+              <LEGAL_ENTITY>
+                <LEGAL_ENTITY_DETAIL>
+                  <FullName>NewPoint Mortgage LLC</FullName>
+                </LEGAL_ENTITY_DETAIL>
+              </LEGAL_ENTITY>
+              <ADDRESSES>
+                <ADDRESS>
+                  <AddressLineText>12 S. Summit Ave #100</AddressLineText>
+                  <CityName>Gaithersburg</CityName>
+                  <CountryCode>US</CountryCode>
+                  <PostalCode>20877</PostalCode>
+                  <StateCode>MD</StateCode>
+                </ADDRESS>
+              </ADDRESSES>
+              <ROLES>
+                <ROLE SequenceNumber="3" xlink:label="PARTY3_ROLE1">
+                  <LICENSES>
+                    <LICENSE>
+                      <LICENSE_DETAIL>
+                        <LicenseAuthorityLevelType>Private</LicenseAuthorityLevelType>
+                        <LicenseIdentifier>2249250</LicenseIdentifier>
+                      </LICENSE_DETAIL>
+                    </LICENSE>
+                    <LICENSE>
+                      <LICENSE_DETAIL>
+                        <LicenseAuthorityLevelType>PublicState</LicenseAuthorityLevelType>
+                        <LicenseIdentifier>60DBO-165873</LicenseIdentifier>
+                      </LICENSE_DETAIL>
+                    </LICENSE>
+                  </LICENSES>
+                  <ROLE_DETAIL>
+                    <PartyRoleType>LoanOriginationCompany</PartyRoleType>
+                  </ROLE_DETAIL>
+                </ROLE>
+              </ROLES>
+            </PARTY>
+            <PARTY SequenceNumber="4">
+              <INDIVIDUAL />
+              <ROLES>
+                <ROLE SequenceNumber="4" xlink:label="PARTY4_ROLE1">
+                  <ROLE_DETAIL>
+                    <PartyRoleType>LoanOriginator</PartyRoleType>
+                  </ROLE_DETAIL>
+                </ROLE>
+              </ROLES>
+            </PARTY>
+          </PARTIES>
+          <RELATIONSHIPS>
+            <RELATIONSHIP SequenceNumber="1" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_LIABILITY" xlink:from="ASSET_6" xlink:to="LIABILITY_1" />
+            <RELATIONSHIP SequenceNumber="2" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_LIABILITY" xlink:from="ASSET_7" xlink:to="LIABILITY_2" />
+            <RELATIONSHIP SequenceNumber="3" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_LIABILITY" xlink:from="ASSET_8" xlink:to="LIABILITY_3" />
+            <RELATIONSHIP SequenceNumber="4" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_LIABILITY" xlink:from="ASSET_10" xlink:to="LIABILITY_4" />
+            <RELATIONSHIP SequenceNumber="5" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_1" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="6" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_2" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="7" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_3" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="8" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_4" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="9" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_5" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="10" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_6" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="11" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_7" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="12" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_8" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="13" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_9" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="14" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_10" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="15" xlink:arcrole="urn:fdc:mismo.org:2009:residential/ASSET_IsAssociatedWith_ROLE" xlink:from="ASSET_11" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="16" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_1" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="17" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_2" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="18" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_3" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="19" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_4" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="20" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_5" xlink:to="BORROWER_1" />
+            <RELATIONSHIP SequenceNumber="21" xlink:arcrole="urn:fdc:mismo.org:2009:residential/LIABILITY_IsAssociatedWith_ROLE" xlink:from="LIABILITY_6" xlink:to="BORROWER_1" />
+          </RELATIONSHIPS>
+        </DEAL>
+      </DEALS>
+    </DEAL_SET>
+  </DEAL_SETS>
+</MESSAGE>
