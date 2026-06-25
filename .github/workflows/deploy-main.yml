@@ -38,6 +38,14 @@ jobs:
 
           sshpass -p "$DEPLOY_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$DEPLOY_USER@$DEPLOY_HOST" "
             set -e
+            if [ ! -d '$DEPLOY_COMPOSE_DIR/.git' ]; then
+              if [ -d '$DEPLOY_COMPOSE_DIR' ] && [ \"\$(ls -A '$DEPLOY_COMPOSE_DIR' 2>/dev/null)\" ]; then
+                echo 'Deploy dir exists but is not a git repo and is not empty'
+                exit 1
+              fi
+              rm -rf '$DEPLOY_COMPOSE_DIR'
+              git clone https://github.com/sumitsp/form-chat-assistant-testing.git '$DEPLOY_COMPOSE_DIR'
+            fi
             cd '$DEPLOY_COMPOSE_DIR'
             REMOTE_URL=\$(git remote get-url origin)
             echo \"origin remote: \$REMOTE_URL\"

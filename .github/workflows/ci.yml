@@ -38,12 +38,15 @@ jobs:
         run: |
           python -c "import backend.api; import backend.batch_excel_report; print('import-ok')"
 
-      - name: Report generation smoke check
+      - name: Template parse smoke check (no DB)
         run: |
-          python -c "from backend.batch_excel_report import build_template_xlsx_bytes, build_batch_report_pdf_bytes; x=build_template_xlsx_bytes(); p=build_batch_report_pdf_bytes(x); print(len(p))"
+          python -c "from backend.batch_excel_report import build_template_xlsx_bytes, parse_batch_scenarios; x=build_template_xlsx_bytes(); rows=parse_batch_scenarios(x); print(len(rows))"
 
       - name: Docker build check
         run: docker build -t form-chat-assistant-ci .
+
+      - name: Prepare compose env placeholder
+        run: test -f .env || touch .env
 
       - name: Docker Compose config check
         run: docker compose -f docker-compose.yml config
