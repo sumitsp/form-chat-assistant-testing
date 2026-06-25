@@ -73,7 +73,7 @@ docker exec <container> supervisorctl status   # see all four programs
 **Pushing to `main` auto-deploys to production.** `.github/workflows/deploy-main.yml` triggers on every push to `main`: it SSHes to the prod host, does `git reset --hard origin/main`, then `docker compose up -d --build form-chat-assistant-testing`, and health-checks `http://127.0.0.1:3020/api/health` (host 3020 → container 8080). Treat a merge to `main` as a production release. Required CI secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PASSWORD`, `DEPLOY_COMPOSE_DIR` (the old `docs/DEPLOY.md` walkthrough is in git history if needed). There is no test/lint CI gate — only the deploy job — so run `npm run lint` / `npm run format` locally before pushing.
 
 ### Database
-
+### Test
 ```bash
 # Initial schema + migrations (run in order, 001–020)
 mysql -u root -p newpoint_mortgage < ingest/schema.sql
