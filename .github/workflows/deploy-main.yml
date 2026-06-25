@@ -1,73 +1,83 @@
-name: Deploy Main
+# Auto-deploy to production when main is pushed.
+# Server layout (same pattern as form-chat-assistant):
+#   DEPLOY_COMPOSE_DIR/docker-compose.yml
+#   DEPLOY_COMPOSE_DIR/form-chat-assistant-testing/   (git clone)
+
+name: Deploy main
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+concurrency:
+  group: deploy-form-chat-assistant-testing
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Deploy form-chat-assistant-testing
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      EXPECTED_REPO: sumitsp/form-chat-assistant-testing
+    timeout-minutes: 20
+
     steps:
-      - name: Assert expected GitHub repository
-        run: |
-          test "${GITHUB_REPOSITORY}" = "${EXPECTED_REPO}" || {
-            echo "This workflow is restricted to ${EXPECTED_REPO}. Current: ${GITHUB_REPOSITORY}"
-            exit 1
-          }
+      - name: Deploy over SSH (git pull + docker compose)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
 
-      - name: Install sshpass + curl
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass curl
+            COMPOSE_DIR="${{ secrets.DEPLOY_COMPOSE_DIR }}"
+            SERVICE="form-chat-assistant-testing"
+            REPO_DIR="${COMPOSE_DIR}/form-chat-assistant-testing"
+            REPO_SLUG="sumitsp/form-chat-assistant-testing"
 
-      - name: Deploy on server via SSH
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
-          DEPLOY_COMPOSE_DIR: ${{ secrets.DEPLOY_COMPOSE_DIR }}
-        run: |
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_USER"
-          test -n "$DEPLOY_SSH_PASSWORD"
-          test -n "$DEPLOY_COMPOSE_DIR"
-
-          sshpass -p "$DEPLOY_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$DEPLOY_USER@$DEPLOY_HOST" "
-            set -e
-            if [ ! -d '$DEPLOY_COMPOSE_DIR/.git' ]; then
-              if [ -d '$DEPLOY_COMPOSE_DIR' ] && [ \"\$(ls -A '$DEPLOY_COMPOSE_DIR' 2>/dev/null)\" ]; then
-                echo 'Deploy dir exists but is not a git repo and is not empty'
-                exit 1
-              fi
-              rm -rf '$DEPLOY_COMPOSE_DIR'
-              git clone https://github.com/sumitsp/form-chat-assistant-testing.git '$DEPLOY_COMPOSE_DIR'
-            fi
-            cd '$DEPLOY_COMPOSE_DIR'
-            REMOTE_URL=\$(git remote get-url origin)
-            echo \"origin remote: \$REMOTE_URL\"
-            echo \"\$REMOTE_URL\" | grep -Eq 'sumitsp/form-chat-assistant-testing(\.git)?$' || {
-              echo 'Refusing deploy: origin remote is not sumitsp/form-chat-assistant-testing'
+            if [ ! -f "${COMPOSE_DIR}/docker-compose.yml" ]; then
+              echo "Missing ${COMPOSE_DIR}/docker-compose.yml"
+              echo "Copy deploy/docker-compose.yml from the repo to the server parent folder."
               exit 1
-            }
-            git fetch origin main
-            git reset --hard origin/main
-            docker compose -f docker-compose.yml up -d --build form-chat-assistant-testing
-          "
-
-      - name: Health check
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        run: |
-          for i in $(seq 1 30); do
-            if curl -fsS "http://$DEPLOY_HOST:3020/api/health" >/dev/null; then
-              echo "Health check passed"
-              exit 0
             fi
-            sleep 5
-          done
-          echo "Health check failed"
-          exit 1
+            if [ ! -d "${REPO_DIR}/.git" ]; then
+              echo "Missing git clone at ${REPO_DIR}"
+              echo "One-time setup: git clone https://github.com/${REPO_SLUG}.git ${REPO_DIR}"
+              exit 1
+            fi
+
+            echo "==> Pulling origin/main in ${REPO_DIR}"
+            GIT_SSH_KEY="${HOME}/.ssh/everadg"
+            if [ -f "${GIT_SSH_KEY}" ]; then
+              chmod 600 "${GIT_SSH_KEY}" 2>/dev/null || true
+              eval "$(ssh-agent -s)"
+              ssh-add "${GIT_SSH_KEY}"
+              export GIT_SSH_COMMAND="ssh -i ${GIT_SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+              git -C "${REPO_DIR}" remote set-url origin "git@github.com:${REPO_SLUG}.git"
+            fi
+            git -C "${REPO_DIR}" fetch origin main
+            git -C "${REPO_DIR}" reset --hard origin/main
+
+            echo "==> Recreate ${SERVICE} container"
+            cd "${COMPOSE_DIR}"
+            docker stop "${SERVICE}" 2>/dev/null || true
+            docker rm "${SERVICE}" 2>/dev/null || true
+            docker compose up -d --build "${SERVICE}"
+
+            echo "==> Health check (host :3020 -> container :8080)"
+            ok=0
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:3020/api/health >/dev/null; then
+                ok=1
+                break
+              fi
+              sleep 2
+            done
+
+            if [ "${ok}" -ne 1 ]; then
+              echo "Health check failed — recent logs:"
+              docker compose logs --tail=80 "${SERVICE}" || true
+              exit 1
+            fi
+
+            echo "Deploy succeeded."

@@ -1,0 +1,14 @@
+# Server-side compose file — lives in DEPLOY_COMPOSE_DIR (parent folder),
+# NOT inside the git clone. Clone repo as sibling:
+#   DEPLOY_COMPOSE_DIR/form-chat-assistant-testing/
+services:
+  form-chat-assistant-testing:
+    build:
+      context: ./form-chat-assistant-testing
+      dockerfile: Dockerfile
+    container_name: form-chat-assistant-testing
+    ports:
+      - "3020:8080"
+    env_file:
+      - ./form-chat-assistant-testing/.env
+    restart: unless-stopped
