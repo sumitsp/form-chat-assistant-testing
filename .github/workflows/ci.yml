@@ -44,3 +44,6 @@ jobs:
 
       - name: Docker build check
         run: docker build -t form-chat-assistant-ci .
+
+      - name: Docker Compose config check
+        run: docker compose -f docker-compose.yml config

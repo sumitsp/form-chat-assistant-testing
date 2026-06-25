@@ -1,0 +1,11 @@
+services:
+  form-chat-assistant-testing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: form-chat-assistant-testing
+    ports:
+      - "3020:8080"
+    env_file:
+      - .env
+    restart: unless-stopped

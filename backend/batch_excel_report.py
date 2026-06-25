@@ -49,10 +49,11 @@ def batch_frontend_html() -> str:
   <title>Mortgage Batch Runner</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #f8fafc; color: #0f172a; }
-    .wrap { max-width: 760px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+    .wrap { max-width: 980px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
     h1 { margin: 0 0 8px; font-size: 24px; }
+    h2 { margin: 18px 0 8px; font-size: 18px; }
     p { margin: 8px 0; line-height: 1.45; }
-    .row { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .row { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     button, .linkbtn {
       border: 1px solid #cbd5e1; background: #0b3b71; color: white; border-radius: 8px; padding: 10px 14px;
       font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block;
@@ -61,23 +62,32 @@ def batch_frontend_html() -> str:
     input[type=file] { margin-top: 6px; width: 100%; }
     #status { margin-top: 14px; color: #334155; }
     .help { margin-top: 14px; font-size: 13px; color: #475569; }
-    code { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; }
-    .busy {
-      opacity: 0.6;
-      filter: grayscale(0.25);
-      pointer-events: none;
-      user-select: none;
+    .chunk-list { margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .chunk-row { padding: 10px 12px; border-top: 1px solid #e2e8f0; background: #fff; }
+    .chunk-row:first-child { border-top: 0; }
+    .chunk-label { font-size: 13px; color: #334155; margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; font-weight: 600; }
+    .history-actions { display: flex; gap: 8px; align-items: center; }
+    .iconbtn {
+      width: 28px; height: 28px; border: 1px solid #cbd5e1; border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none; color: #0f172a; background: #fff;
+      font-size: 14px; line-height: 1;
     }
-    button:disabled, input:disabled, .linkbtn[aria-disabled="true"] {
-      cursor: not-allowed;
-      opacity: 0.75;
-    }
+    .iconbtn:hover { background: #f8fafc; }
+    .iconbtn.delete { color: #b91c1c; border-color: #fecaca; }
+    .pagination { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+    .muted { color: #64748b; font-size: 13px; }
+    .busy { opacity: 0.7; }
+    button:disabled, input:disabled, .linkbtn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.75; }
   </style>
 </head>
 <body>
   <div class="wrap" id="panel">
     <h1>Mortgage Batch Runner</h1>
-    <p>Upload one Excel file where each row is one scenario. The server runs eligibility + LoanPASS checks and returns a PDF report.</p>
+    <p>Upload one Excel file where each row is one scenario. Files with more than 10 scenarios are auto-processed in chunks of 10 with separate downloads.</p>
     <div class="row">
       <a class="linkbtn" id="downloadTemplateBtn" href="/api/batch/template">Download Excel Template</a>
     </div>
@@ -85,15 +95,32 @@ def batch_frontend_html() -> str:
       <p><strong>Select Excel:</strong></p>
       <input id="xlsx" type="file" accept=".xlsx" required />
       <div class="row">
-        <button id="runBtn" type="submit">Run and Download PDF</button>
+        <button id="runBtn" type="submit">Run Batch</button>
       </div>
     </form>
-    <div class="row" id="downloadsRow" style="display:none;">
-      <a class="linkbtn" id="downloadPdfBtn" href="#">Download PDF</a>
-      <a class="linkbtn" id="downloadJsonBtn" href="#">Download JSON</a>
-    </div>
     <div id="status"></div>
-    <p class="help">Template headers use API keys (for example <code>occupancy</code>, <code>loanAmount</code>, <code>state</code>, <code>documentationType</code>). Common form-question labels are also accepted.</p>
+    <div id="chunkResults"></div>
+    <p class="help">Use the exact template headers as generated (Form Mode question text, in order). Do not add/remove/reorder columns.</p>
+
+    <h2>Testing History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Scenarios</th>
+          <th>Date Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="4" class="muted">Loading...</td></tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <button id="prevBtn" type="button">Prev</button>
+      <span id="pageInfo" class="muted"></span>
+      <button id="nextBtn" type="button">Next</button>
+    </div>
   </div>
   <script>
     const panel = document.getElementById("panel");
@@ -101,13 +128,17 @@ def batch_frontend_html() -> str:
     const input = document.getElementById("xlsx");
     const runBtn = document.getElementById("runBtn");
     const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
-    const downloadsRow = document.getElementById("downloadsRow");
-    const downloadPdfBtn = document.getElementById("downloadPdfBtn");
-    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
     const status = document.getElementById("status");
+    const chunkResults = document.getElementById("chunkResults");
+    const historyBody = document.getElementById("historyBody");
+    const pageInfo = document.getElementById("pageInfo");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
     let inFlight = false;
-    let requestController = null;
-    let requestTimeoutId = null;
+    let historyPage = 1;
+    const HISTORY_PAGE_SIZE = 10;
+    let activePoll = null;
 
     function setBusy(isBusy) {
       inFlight = isBusy;
@@ -123,9 +154,97 @@ def batch_frontend_html() -> str:
       }
     }
 
-    downloadTemplateBtn.addEventListener("click", (e) => {
-      if (inFlight) e.preventDefault();
-    });
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+    }
+
+    function normalizeFileLabel(label) {
+      return String(label ?? "").replace(/\s*-\s*All scenarios\s*\(\d+\)\s*$/i, "").trim();
+    }
+
+    function renderChunks(data) {
+      const chunks = data?.chunks || [];
+      if (!chunks.length) {
+        chunkResults.innerHTML = "";
+        return;
+      }
+      const rows = chunks.map((c) => {
+        return `<div class="chunk-row">
+          <div class="chunk-label">${esc(c.chunk_label)} (${esc(c.scenario_count)} scenarios)</div>
+          <div class="row">
+            <a class="linkbtn" href="${esc(c.pdf_download_url)}">Download PDF</a>
+            <a class="linkbtn" href="${esc(c.json_download_url)}">Download JSON</a>
+          </div>
+        </div>`;
+      }).join("");
+      chunkResults.innerHTML = `<div class="chunk-list">${rows}</div>`;
+    }
+
+    async function loadHistory(page) {
+      const res = await fetch(`/api/batch/history?page=${page}&page_size=${HISTORY_PAGE_SIZE}`);
+      if (!res.ok) throw new Error("Failed to load history");
+      const data = await res.json();
+      const items = data.items || [];
+      if (!items.length) {
+        historyBody.innerHTML = '<tr><td colspan="4" class="muted">No runs yet.</td></tr>';
+      } else {
+        historyBody.innerHTML = items.map((it) => {
+          const pdf = `/api/batch/history/${it.id}/pdf`;
+          const jsn = `/api/batch/history/${it.id}/json`;
+          const fileLabel = normalizeFileLabel((it.chunk_label && String(it.chunk_label).trim()) || it.source_file_name);
+          return `<tr>
+            <td>${esc(fileLabel)}</td>
+            <td>${esc(it.scenario_count)}</td>
+            <td>${esc(it.created_at)}</td>
+            <td class="history-actions">
+              <a class="iconbtn" href="${esc(pdf)}" title="Download PDF" aria-label="Download PDF">&#128196;</a>
+              <a class="iconbtn" href="${esc(jsn)}" title="Download JSON" aria-label="Download JSON">&#123;&#125;</a>
+              <button class="iconbtn delete delete-history-btn" type="button" data-id="${it.id}" title="Delete" aria-label="Delete">&#128465;</button>
+            </td>
+          </tr>`;
+        }).join("");
+      }
+      const total = Number(data.total || 0);
+      const totalPages = Math.max(1, Math.ceil(total / HISTORY_PAGE_SIZE));
+      historyPage = Math.min(Math.max(1, page), totalPages);
+      pageInfo.textContent = `Page ${historyPage} of ${totalPages} (${total} runs)`;
+      prevBtn.disabled = historyPage <= 1;
+      nextBtn.disabled = historyPage >= totalPages;
+    }
+
+    async function pollJob(jobId) {
+      if (activePoll) window.clearInterval(activePoll);
+      const tick = async () => {
+        const res = await fetch(`/api/batch/run/${jobId}`);
+        if (!res.ok) {
+          status.textContent = "Failed to fetch run progress.";
+          setBusy(false);
+          if (activePoll) window.clearInterval(activePoll);
+          activePoll = null;
+          return;
+        }
+        const data = await res.json();
+        renderChunks(data);
+        if (data.status === "failed") {
+          status.textContent = `Failed: ${data.error || "unknown error"}`;
+          setBusy(false);
+          if (activePoll) window.clearInterval(activePoll);
+          activePoll = null;
+          await loadHistory(historyPage);
+          return;
+        }
+        status.textContent = `Processing chunks ${data.completed_chunks}/${data.total_chunks} | scenarios ${data.processed_scenarios || 0}/${data.total_scenarios || 0}`;
+        if (data.status === "completed") {
+          status.textContent = "Done. Download each chunk output below or from history.";
+          setBusy(false);
+          if (activePoll) window.clearInterval(activePoll);
+          activePoll = null;
+          await loadHistory(1);
+        }
+      };
+      await tick();
+      activePoll = window.setInterval(tick, 2000);
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -135,55 +254,58 @@ def batch_frontend_html() -> str:
         status.textContent = "Please choose an .xlsx file.";
         return;
       }
-      requestController = new AbortController();
-      requestTimeoutId = window.setTimeout(() => {
-        if (requestController) requestController.abort();
-      }, 120000);
       setBusy(true);
-      downloadsRow.style.display = "none";
-      status.textContent = "Running scenarios... this may take a moment.";
-      const fd = new FormData();
-      fd.append("file", file);
+      chunkResults.innerHTML = "";
+      status.textContent = "Starting batch run...";
       try {
-        const res = await fetch("/api/batch/run", {
-          method: "POST",
-          body: fd,
-          signal: requestController.signal,
-        });
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/batch/run", { method: "POST", body: fd });
         if (!res.ok) {
           const txt = await res.text();
           throw new Error(txt || ("Request failed with status " + res.status));
         }
         const data = await res.json();
-        downloadPdfBtn.href = data.pdf_download_url;
-        downloadPdfBtn.download = "mortgage-batch-report.pdf";
-        downloadJsonBtn.href = data.json_download_url;
-        downloadJsonBtn.download = "eligibility_batch_test_api_contract.json";
-        downloadsRow.style.display = "flex";
-        status.textContent = "Done. Use the download buttons.";
+        await pollJob(data.job_id);
       } catch (err) {
-        if (err?.name === "AbortError") {
-          status.textContent = "Timed out or cancelled. Please try again.";
-          return;
-        }
-        status.textContent = "Failed: " + (err?.message || err);
-      } finally {
-        if (requestTimeoutId) {
-          window.clearTimeout(requestTimeoutId);
-          requestTimeoutId = null;
-        }
-        requestController = null;
         setBusy(false);
+        status.textContent = "Failed: " + (err?.message || err);
+      }
+    });
+
+    prevBtn.addEventListener("click", async () => {
+      if (historyPage <= 1) return;
+      await loadHistory(historyPage - 1);
+    });
+    nextBtn.addEventListener("click", async () => {
+      await loadHistory(historyPage + 1);
+    });
+
+    historyBody.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".delete-history-btn");
+      if (!btn) return;
+      const id = Number(btn.getAttribute("data-id") || "0");
+      if (!id) return;
+      const ok = window.confirm("Delete this history row?");
+      if (!ok) return;
+      try {
+        const res = await fetch(`/api/batch/history/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Delete failed");
+        await loadHistory(historyPage);
+      } catch {
+        status.textContent = "Failed to delete row.";
       }
     });
 
     window.addEventListener("beforeunload", () => {
-      if (requestController) requestController.abort();
+      if (activePoll) window.clearInterval(activePoll);
     });
 
-    // Refresh/new load always starts from home state.
     status.textContent = "";
     setBusy(false);
+    loadHistory(1).catch(() => {
+      historyBody.innerHTML = '<tr><td colspan="4" class="muted">Failed to load history.</td></tr>';
+    });
   </script>
 </body>
 </html>
@@ -191,44 +313,116 @@ def batch_frontend_html() -> str:
 
 
 _ELIGIBILITY_KEYS = list(EligibilityRequest.model_fields.keys())
-_LOWER_KEY_MAP = {k.lower(): k for k in _ELIGIBILITY_KEYS}
+_ELIGIBILITY_KEY_SET = set(_ELIGIBILITY_KEYS)
 
-_OPTIONAL_FIELDS = {
-    "existingFirstLien",
-    "cltv",
-    "dscr",
-    "creditEvent",
-    "creditEventType",
-    "yearsSinceEvent",
-    "firstTimeHomebuyer",
-    "rentalType",
-    "qualificationPath",
-    "firstTimeInvestor",
-    "establishedPrimaryRes",
-    "stateCounty",
-    "stateCity",
-    "stateBorough",
-    "stateZipCode",
-    "isInBaltimoreCity",
-    "isInIndianapolis",
-    "isInPhiladelphia",
-    "isInMemphis",
-    "isInLubbock",
-    "loanTerm",
-    "interestOnlyPref",
-    "rateTypePref",
-    "secondLienProduct",
-    "hiLavaZone",
-    "isRuralProperty",
-    "acreage",
-    "nonOccupantCoBorrower",
-    "combinedDti",
-    "visaType",
-    "visaCategory",
-    "hasUsCredit",
-    "prepayStepdown",
-    "listingSeasoning",
+# Strict template contract: columns mirror the Form Mode question set.
+_FORM_MODE_COLUMNS: list[dict[str, Any]] = [
+    {"header": "What's the citizenship status of the primary borrower?", "field": "citizenship"},
+    {"header": "Is the borrower a citizen of, or residing in, an OFAC-sanctioned country?", "field": "ofacSanctioned"},
+    {"header": "Which visa category does the borrower hold?", "field": "visaCategory"},
+    {"header": "Which specific visa type?", "field": "visaType"},
+    {"header": "Does the borrower have an established US credit score?", "field": "hasUsCredit"},
+    {"header": "What's the occupancy type?", "field": "occupancy"},
+    {"header": "What's the loan purpose?", "field": "loanPurpose"},
+    {"header": "What's the lien position?", "field": "lienPosition"},
+    {"header": "What type of second-lien product?", "field": "secondLienProduct"},
+    {"header": "What's the property type?", "field": "propertyType"},
+    {"header": "What is the property value (sales price/appraised value)?", "field": "valueSalesPrice"},
+    {"header": "What is the loan amount?", "field": "loanAmount"},
+    {"header": "What is the LTV (%)?", "field": "ltv"},
+    {"header": "What's the balance on the existing first lien?", "field": "existingFirstLien"},
+    {"header": "What's the Decision Credit Score?", "field": "decisionCreditScore"},
+    {"header": "Is the borrower a first-time homebuyer?", "field": "firstTimeHomebuyer"},
+    {"header": "Is the borrower a first-time investor?", "field": "firstTimeInvestor"},
+    {"header": "How will this investment property qualify: income or DSCR?", "field": "investmentIncomePath"},
+    {"header": "Does the borrower currently have an established primary residence?", "field": "establishedPrimaryRes"},
+    {"header": "What documentation type will the borrower use?", "field": "documentationType"},
+    {"header": "What documentation timeframe applies (12/24)?", "field": None},
+    {"header": "What's the estimated DTI (debt-to-income)?", "field": "estimatedDti"},
+    {"header": "Do you have a non-occupant co-borrower to help qualify?", "field": "nonOccupantCoBorrower"},
+    {"header": "What is the combined DTI with the co-borrower included?", "field": "combinedDti"},
+    {"header": "What's the DSCR (debt-service coverage ratio)?", "field": "dscr"},
+    {"header": "What's the rental type?", "field": "rentalType"},
+    {"header": "What prepayment penalty term is acceptable?", "field": "prepaymentTerms"},
+    {"header": "Prefer a step-down prepayment structure?", "field": "prepayStepdown"},
+    {"header": "How many months of reserves are available (PITIA)?", "field": None},
+    {"header": "What's the borrower's housing payment history over the last 12 months?", "field": "paymentHistory"},
+    {"header": "Any prior credit events (bankruptcy, foreclosure, short sale, etc.)?", "field": "hasCreditEvent"},
+    {"header": "Which credit event (or None)?", "field": "creditEvent"},
+    {"header": "Credit event type (if applicable)", "field": "creditEventType"},
+    {"header": "Years since credit event (if applicable)", "field": "yearsSinceEvent"},
+    {"header": "What state is the property in?", "field": "state"},
+    {"header": "Which county is the property in?", "field": "stateCounty"},
+    {"header": "State geo follow-up: city", "field": "stateCity"},
+    {"header": "State geo follow-up: borough", "field": "stateBorough"},
+    {"header": "State geo follow-up: ZIP code", "field": "stateZipCode"},
+    {"header": "State geo follow-up: property is in Baltimore City?", "field": "isInBaltimoreCity"},
+    {"header": "State geo follow-up: property is in Indianapolis?", "field": "isInIndianapolis"},
+    {"header": "State geo follow-up: property is in Philadelphia?", "field": "isInPhiladelphia"},
+    {"header": "State geo follow-up: property is in Memphis?", "field": "isInMemphis"},
+    {"header": "State geo follow-up: property is in Lubbock?", "field": "isInLubbock"},
+    {"header": "Which lava zone is the Hawaii property in?", "field": "hiLavaZone"},
+    {"header": "Is the property rural?", "field": "isRuralProperty"},
+    {"header": "Roughly how many acres?", "field": "acreage"},
+    {"header": "Was the property listed for sale in the last 6 months?", "field": "listingSeasoning"},
+    {"header": "Will the loan be signed via Power of Attorney?", "field": "powerOfAttorney"},
+    {"header": "Is this a non-arm's-length transaction?", "field": "nonArmsLength"},
+    {"header": "Preferred loan term(s)", "field": "loanTerm"},
+    {"header": "Rate type preference?", "field": "rateTypePref"},
+    {"header": "Interest-only preference?", "field": "interestOnlyPref"},
+]
+
+_OPTIONAL_HEADERS = {
+    "What's the balance on the existing first lien?",
+    "What type of second-lien product?",
+    "What documentation timeframe applies (12/24)?",
+    "Do you have a non-occupant co-borrower to help qualify?",
+    "What is the combined DTI with the co-borrower included?",
+    "What's the DSCR (debt-service coverage ratio)?",
+    "What's the rental type?",
+    "Prefer a step-down prepayment structure?",
+    "What's the borrower's housing payment history over the last 12 months?",
+    "Any prior credit events (bankruptcy, foreclosure, short sale, etc.)?",
+    "Which credit event (or None)?",
+    "Credit event type (if applicable)",
+    "Years since credit event (if applicable)",
+    "State geo follow-up: city",
+    "State geo follow-up: borough",
+    "State geo follow-up: ZIP code",
+    "State geo follow-up: property is in Baltimore City?",
+    "State geo follow-up: property is in Indianapolis?",
+    "State geo follow-up: property is in Philadelphia?",
+    "State geo follow-up: property is in Memphis?",
+    "State geo follow-up: property is in Lubbock?",
+    "Which lava zone is the Hawaii property in?",
+    "Is the property rural?",
+    "Roughly how many acres?",
+    "Was the property listed for sale in the last 6 months?",
+    "Preferred loan term(s)",
+    "Rate type preference?",
+    "Interest-only preference?",
 }
+
+_STATE_OPTIONS = [
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "DC",
+]
+
+_COUNTY_OPTIONS = [
+    "Baker County", "Harris County", "Miami-Dade County", "Broward County",
+    "Palm Beach County", "Orange County", "Los Angeles County", "Cook County",
+    "Maricopa County", "Dallas County", "San Diego County", "Riverside County",
+    "Alameda County", "Santa Clara County", "King County", "Clark County",
+    "Fulton County", "Mecklenburg County", "Wayne County", "Nassau County",
+    "Suffolk County", "Queens County", "Kings County", "Bronx County",
+    "New York County", "Duval County", "Pinellas County", "Hillsborough County",
+    "Polk County", "Lee County", "Collier County", "Brevard County",
+    "Escambia County", "Volusia County", "Seminole County", "Pasco County",
+]
 
 _DROPDOWN_OPTIONS: dict[str, list[str]] = {
     "occupancy": ["Primary Residence", "Second Home", "Investment Property"],
@@ -262,22 +456,31 @@ _DROPDOWN_OPTIONS: dict[str, list[str]] = {
         "Non-Permanent Resident Alien",
         "Foreign National",
     ],
-    "paymentHistory": ["0x30x12", "1x30x12", "0x60x12", "1x60x12"],
-    "lienPosition": ["first_lien_only", "second_lien", "second_lien_piggyback"],
-    "secondLienProduct": ["HELOC", "HELOAN"],
+    "state": _STATE_OPTIONS,
+    "stateCounty": _COUNTY_OPTIONS,
+    "paymentHistory": ["0x30", "1x30", "0x60", "1x60", "1x120"],
+    "lienPosition": ["First Lien", "Second Lien"],
+    "secondLienProduct": ["heloc", "heloan"],
     "investmentIncomePath": ["income", "dscr"],
     "qualificationPath": ["DTI", "DSCR"],
-    "rentalType": ["Long-term", "Short-term"],
-    "loanTerm": ["30", "40", "No Preference"],
-    "interestOnlyPref": ["Yes", "No", "No Preference"],
-    "rateTypePref": ["Fixed", "ARM", "No Preference"],
-    "visaCategory": ["A", "E", "G", "H", "L", "O", "TN", "Other"],
-    "prepayStepdown": ["No", "5-4-3-2-1", "3-2-1"],
-    "prepaymentTerms": ["No", "1", "2", "3", "4", "5"],
+    "rentalType": ["Long-term rental", "Short-term rental"],
+    "loanTerm": ["10", "15", "20", "25", "30", "40", "No preference"],
+    "interestOnlyPref": ["No preference", "Yes", "No"],
+    "rateTypePref": ["No Preference", "Fixed", "Adjustable-Rate"],
+    "visaCategory": [
+        "employment",
+        "treaty_investor",
+        "intracompany",
+        "extraordinary",
+        "religious_diplomatic",
+        "other",
+    ],
+    "prepayStepdown": ["Yes", "No"],
+    "prepaymentTerms": ["5 Year", "4 Year", "3 Year", "2 Year", "1 Year", "No Penalty"],
     "firstTimeHomebuyer": ["Yes", "No"],
     "firstTimeInvestor": ["Yes", "No"],
     "isSecondLien": ["Yes", "No"],
-    "hiLavaZone": ["Yes", "No"],
+    "hiLavaZone": ["Zone 1", "Zone 2", "Zone 3-9 (lower risk)"],
     "isRuralProperty": ["Yes", "No"],
     "nonOccupantCoBorrower": ["Yes", "No"],
     "ofacSanctioned": ["Yes", "No"],
@@ -285,66 +488,6 @@ _DROPDOWN_OPTIONS: dict[str, list[str]] = {
     "listingSeasoning": ["Yes", "No"],
     "powerOfAttorney": ["Yes", "No"],
     "nonArmsLength": ["Yes", "No"],
-}
-
-
-_HEADER_ALIASES = {
-    "occupancy": "occupancy",
-    "loan purpose": "loanPurpose",
-    "primary loan purpose": "primaryLoanPurpose",
-    "state": "state",
-    "property value": "valueSalesPrice",
-    "value/sales price": "valueSalesPrice",
-    "sales price": "valueSalesPrice",
-    "loan amount": "loanAmount",
-    "ltv": "ltv",
-    "estimated dti": "estimatedDti",
-    "documentation type": "documentationType",
-    "prepayment terms": "prepaymentTerms",
-    "property type": "propertyType",
-    "citizenship": "citizenship",
-    "decision credit score": "decisionCreditScore",
-    "existing first lien": "existingFirstLien",
-    "cltv": "cltv",
-    "dscr": "dscr",
-    "credit event": "creditEvent",
-    "credit event type": "creditEventType",
-    "years since event": "yearsSinceEvent",
-    "first time homebuyer": "firstTimeHomebuyer",
-    "rental type": "rentalType",
-    "qualification path": "qualificationPath",
-    "payment history": "paymentHistory",
-    "first time investor": "firstTimeInvestor",
-    "established primary residence": "establishedPrimaryRes",
-    "is second lien": "isSecondLien",
-    "state county": "stateCounty",
-    "state city": "stateCity",
-    "state borough": "stateBorough",
-    "state zip code": "stateZipCode",
-    "is in baltimore city": "isInBaltimoreCity",
-    "is in indianapolis": "isInIndianapolis",
-    "is in philadelphia": "isInPhiladelphia",
-    "is in memphis": "isInMemphis",
-    "is in lubbock": "isInLubbock",
-    "loan term": "loanTerm",
-    "interest only pref": "interestOnlyPref",
-    "rate type pref": "rateTypePref",
-    "lien position": "lienPosition",
-    "second lien product": "secondLienProduct",
-    "hi lava zone": "hiLavaZone",
-    "is rural property": "isRuralProperty",
-    "acreage": "acreage",
-    "non occupant co borrower": "nonOccupantCoBorrower",
-    "combined dti": "combinedDti",
-    "visa type": "visaType",
-    "visa category": "visaCategory",
-    "ofac sanctioned": "ofacSanctioned",
-    "has us credit": "hasUsCredit",
-    "investment income path": "investmentIncomePath",
-    "prepay stepdown": "prepayStepdown",
-    "listing seasoning": "listingSeasoning",
-    "power of attorney": "powerOfAttorney",
-    "non arms length": "nonArmsLength",
 }
 
 
@@ -358,25 +501,7 @@ def _normalize_header(text: str) -> str:
     s = s.replace("*", " ")
     s = re.sub(r"[_/\\-]+", " ", s)
     s = re.sub(r"\s+", " ", s)
-    return s
-
-
-def _header_to_field(header: str) -> str | None:
-    raw = (header or "").strip()
-    raw = re.sub(r"\s*\(\s*optional\s*\)\s*", "", raw, flags=re.I)
-    raw = re.sub(r"\[\s*dropdown\s*\]", "", raw, flags=re.I)
-    raw = re.sub(r"\(\s*dropdown\s*\)", "", raw, flags=re.I)
-    raw = re.sub(r"\(\s*select\s*\)", "", raw, flags=re.I)
-    raw = raw.replace("▼", "")
-    raw = raw.replace("*", "").strip()
-    if not raw:
-        return None
-    if raw in _ELIGIBILITY_KEYS:
-        return raw
-    lower_key = _LOWER_KEY_MAP.get(raw.lower())
-    if lower_key:
-        return lower_key
-    return _HEADER_ALIASES.get(_normalize_header(raw))
+    return s.strip()
 
 
 def build_template_xlsx_bytes() -> bytes:
@@ -384,13 +509,14 @@ def build_template_xlsx_bytes() -> bytes:
     ws = wb.active
     ws.title = "Scenarios"
 
-    export_headers = [_SCENARIO_NAME_FIELD] + _ELIGIBILITY_KEYS
+    export_headers = [_SCENARIO_NAME_FIELD] + [str(col["header"]) for col in _FORM_MODE_COLUMNS]
     display_headers = [_SCENARIO_NAME_FIELD]
-    for field in _ELIGIBILITY_KEYS:
-        label = field
-        if field in _OPTIONAL_FIELDS:
+    for col in _FORM_MODE_COLUMNS:
+        label = str(col["header"])
+        field = col.get("field")
+        if label in _OPTIONAL_HEADERS:
             label += " *"
-        if field in _DROPDOWN_OPTIONS:
+        if isinstance(field, str) and field in _DROPDOWN_OPTIONS:
             label += " ▼"
         display_headers.append(label)
     ws.append(display_headers)
@@ -430,7 +556,14 @@ def build_template_xlsx_bytes() -> bytes:
         "powerOfAttorney": "No",
         "nonArmsLength": "No",
     }
-    ws.append([sample_values.get(h, "") for h in export_headers])
+    sample_row = ["Scenario 1"]
+    for col in _FORM_MODE_COLUMNS:
+        field = col.get("field")
+        if isinstance(field, str):
+            sample_row.append(sample_values.get(field, ""))
+        else:
+            sample_row.append("")
+    ws.append(sample_row)
 
     header_fill = PatternFill(fill_type="solid", start_color="E2E8F0", end_color="E2E8F0")
     for cell in ws[1]:
@@ -442,7 +575,11 @@ def build_template_xlsx_bytes() -> bytes:
 
     # Auto loan amount formula: loanAmount = valueSalesPrice * ltv / 100
     # Applied for the first 1000 scenario rows.
-    col_idx = {field: i + 1 for i, field in enumerate(export_headers)}
+    col_idx: dict[str, int] = {}
+    for i, col in enumerate(_FORM_MODE_COLUMNS, start=2):
+        field = col.get("field")
+        if isinstance(field, str):
+            col_idx[field] = i
     val_col = get_column_letter(col_idx["valueSalesPrice"])
     loan_col = get_column_letter(col_idx["loanAmount"])
     ltv_col = get_column_letter(col_idx["ltv"])
@@ -452,15 +589,28 @@ def build_template_xlsx_bytes() -> bytes:
         )
 
     # Dropdown validations for enum-like fields.
+    # Use hidden sheet ranges for long option lists (county/state etc.) so Excel
+    # reliably shows dropdowns even when the list string would be too long.
+    dd = wb.create_sheet("_dropdowns")
+    dd.sheet_state = "hidden"
+    dd_col = 1
     for field, options in _DROPDOWN_OPTIONS.items():
         idx = col_idx.get(field)
         if not idx:
             continue
         col = get_column_letter(idx)
         options_csv = ",".join(options)
+        if len(options_csv) <= 240:
+            formula1 = f'"{options_csv}"'
+        else:
+            dd_col_letter = get_column_letter(dd_col)
+            for row_i, option in enumerate(options, start=1):
+                dd.cell(row=row_i, column=dd_col, value=option)
+            formula1 = f"=_dropdowns!${dd_col_letter}$1:${dd_col_letter}${len(options)}"
+            dd_col += 1
         dv = DataValidation(
             type="list",
-            formula1=f'"{options_csv}"',
+            formula1=formula1,
             allow_blank=True,
             showDropDown=False,
         )
@@ -493,6 +643,13 @@ def _cell_to_text(value: Any) -> str:
     return str(value).strip()
 
 
+def _display_header_text(header: str) -> str:
+    text = (header or "").strip()
+    text = text.replace("▼", "").replace("*", "")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 @dataclass
 class _ScenarioRun:
     scenario_no: int
@@ -520,23 +677,31 @@ def _parse_excel_rows(
     if not any(h.strip() for h in headers):
         raise ValueError("Header row is empty.")
 
-    idx_to_field: dict[int, str] = {}
-    scenario_col_idx: int | None = None
-    for idx, head in enumerate(headers):
-        if _normalize_header(head) == _normalize_header(_SCENARIO_NAME_FIELD):
-            scenario_col_idx = idx
-            continue
-        field = _header_to_field(head)
-        if field:
-            idx_to_field[idx] = field
-
-    if scenario_col_idx is None:
-        raise ValueError("Template must include first column 'scenarioName'.")
-
-    if not idx_to_field:
+    expected_headers = [_SCENARIO_NAME_FIELD] + [str(col["header"]) for col in _FORM_MODE_COLUMNS]
+    actual_norm = [_normalize_header(h) for h in headers]
+    expected_norm = [_normalize_header(h) for h in expected_headers]
+    if len(actual_norm) != len(expected_norm) or actual_norm != expected_norm:
+        extra = [h for h in headers if _normalize_header(h) not in set(expected_norm)]
+        missing = [h for h in expected_headers if _normalize_header(h) not in set(actual_norm)]
+        details: list[str] = []
+        if missing:
+            details.append(f"missing columns: {', '.join(missing[:8])}")
+        if extra:
+            details.append(f"extra columns: {', '.join(extra[:8])}")
+        if not details:
+            details.append("column names/order do not match template")
         raise ValueError(
-            "No recognized columns found. Use /api/batch/template headers or eligibility field keys."
+            "Excel headers must exactly match Form Mode question columns from /api/batch/template; "
+            + "; ".join(details)
+            + "."
         )
+
+    scenario_col_idx = 0
+    idx_to_field: dict[int, str] = {}
+    for idx, col in enumerate(_FORM_MODE_COLUMNS, start=1):
+        field = col.get("field")
+        if isinstance(field, str):
+            idx_to_field[idx] = field
 
     scenarios: list[tuple[int, str, dict[str, str], list[tuple[str, str]]]] = []
     scenario_no = 0
@@ -559,7 +724,7 @@ def _parse_excel_rows(
             if not val:
                 continue
             header = headers[idx] if idx < len(headers) else f"Column {idx + 1}"
-            input_rows.append((header, val))
+            input_rows.append((_display_header_text(header), val))
             field = idx_to_field.get(idx)
             if field:
                 form_payload[field] = val
@@ -568,6 +733,28 @@ def _parse_excel_rows(
     if not scenarios:
         raise ValueError("No valid scenario rows found (scenarioName is required).")
     return scenarios
+
+
+def _normalize_form_mode_payload(form_payload: dict[str, str]) -> dict[str, str]:
+    payload = dict(form_payload)
+    loan_purpose = (payload.get("loanPurpose") or "").strip()
+    if loan_purpose and not (payload.get("primaryLoanPurpose") or "").strip():
+        payload["primaryLoanPurpose"] = loan_purpose
+    income_path = (payload.get("investmentIncomePath") or "").strip()
+    if income_path and not (payload.get("qualificationPath") or "").strip():
+        payload["qualificationPath"] = income_path
+    lien_raw = (payload.get("lienPosition") or "").strip().lower()
+    if lien_raw in {"first lien", "first_lien_only"}:
+        payload["lienPosition"] = "first_lien_only"
+        payload["isSecondLien"] = "no"
+    elif lien_raw in {"second lien", "second_lien", "second_lien_piggyback"}:
+        is_purchase = loan_purpose == "Purchase"
+        payload["lienPosition"] = "second_lien_piggyback" if is_purchase else "second_lien"
+        payload["isSecondLien"] = "yes"
+    if (payload.get("hasCreditEvent") or "").strip().lower() in {"no", "n"}:
+        if not (payload.get("creditEvent") or "").strip():
+            payload["creditEvent"] = "None"
+    return {k: v for k, v in payload.items() if k in _ELIGIBILITY_KEY_SET}
 
 
 def _categorize_rejection(layer: str, reason: str) -> str:
@@ -639,9 +826,9 @@ def _run_scenario(
     input_rows: list[tuple[str, str]],
     loanpass_products_cache: dict[int, list[str]],
 ) -> _ScenarioRun:
-    # Fast batch path: deterministic SQL engine + trace-enabled reject reasons.
-    # This avoids the very slow full-mode RAG/Qdrant layers that can hang for minutes.
-    result = find_eligible_programs(form_payload, quick=True, collect_trace=True)
+    # Strict parity with form submit path: run full eligibility mode.
+    normalized_payload = _normalize_form_mode_payload(form_payload)
+    result = find_eligible_programs(normalized_payload, quick=False, collect_trace=True)
     eligible = result.get("eligible") or []
     total_programs_evaluated = len((result.get("program_trace") or {}).get("programs") or []) or int(
         result.get("total_screened") or 0
@@ -674,7 +861,7 @@ def _run_scenario(
             lp_products: list[dict[str, Any]] | None = None
             if product_names is None:
                 lp = list_program_products(
-                    form_payload,
+                    normalized_payload,
                     program_id=pid,
                     program_name=program_name or None,
                     investor_name=investor_name or None,
@@ -788,16 +975,7 @@ def _run_scenario(
 
 def _build_profile_sections(run: _ScenarioRun) -> list[ProfileSection]:
     profile_rows = [ProfileRow(label=label, value=value) for label, value in run.input_rows]
-    sections: list[ProfileSection] = [
-        ProfileSection(title="Scenario Inputs", rows=profile_rows),
-    ]
-    if run.loanpass_rows:
-        lp_rows = [
-            ProfileRow(label=prog, value=(products or "-"))
-            for prog, products in run.loanpass_rows
-        ]
-        sections.append(ProfileSection(title="LoanPASS Passed Programs", rows=lp_rows))
-    return sections
+    return [ProfileSection(title="Scenario Inputs", rows=profile_rows)]
 
 
 def _build_program_items(run: _ScenarioRun) -> list[ScenarioPdfProgramItem]:
@@ -810,6 +988,19 @@ def _build_program_items(run: _ScenarioRun) -> list[ScenarioPdfProgramItem]:
             ScenarioPdfProgramItem(
                 program_title=title,
                 investor_name=investor_name if investor_name != "-" else "",
+                products_display=products if products != "-" else "",
+            )
+        )
+    return items
+
+
+def _build_loanpass_program_items(run: _ScenarioRun) -> list[ScenarioPdfProgramItem]:
+    items: list[ScenarioPdfProgramItem] = []
+    for program_name, products in run.loanpass_rows:
+        items.append(
+            ScenarioPdfProgramItem(
+                program_title=program_name,
+                investor_name="",
                 products_display=products if products != "-" else "",
             )
         )
@@ -933,6 +1124,12 @@ def _add_section_title(doc: fitz.Document, page: fitz.Page, y: float, text: str)
 
 def _execute_batch_runs(xlsx_bytes: bytes) -> list[_ScenarioRun]:
     parsed = _parse_excel_rows(xlsx_bytes)
+    return _execute_batch_runs_from_parsed(parsed)
+
+
+def _execute_batch_runs_from_parsed(
+    parsed: list[tuple[int, str, dict[str, str], list[tuple[str, str]]]]
+) -> list[_ScenarioRun]:
     loanpass_products_cache: dict[int, list[str]] = {}
     return [
         _run_scenario(num, name, payload, inputs, loanpass_products_cache)
@@ -981,11 +1178,16 @@ def _build_contract_from_runs(scenario_runs: list[_ScenarioRun]) -> dict[str, An
 
 def build_batch_outputs(xlsx_bytes: bytes) -> tuple[bytes, bytes]:
     scenario_runs = _execute_batch_runs(xlsx_bytes)
+    return _build_outputs_from_runs(scenario_runs)
+
+
+def _build_outputs_from_runs(scenario_runs: list[_ScenarioRun]) -> tuple[bytes, bytes]:
     merged = fitz.open()
     for run in scenario_runs:
         req = ScenarioPdfRequest(
             profile_sections=_build_profile_sections(run),
             programs=_build_program_items(run),
+            loanpass_programs=_build_loanpass_program_items(run),
             rejected_programs=_build_rejected_items(run),
             scenario_description=run.scenario_name or f"Scenario {run.scenario_no}",
             form_fields=None,
@@ -1001,6 +1203,19 @@ def build_batch_outputs(xlsx_bytes: bytes) -> tuple[bytes, bytes]:
     pdf_bytes = out.getvalue()
     json_bytes = (json.dumps(_build_contract_from_runs(scenario_runs), indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     return pdf_bytes, json_bytes
+
+
+def parse_batch_scenarios(
+    xlsx_bytes: bytes,
+) -> list[tuple[int, str, dict[str, str], list[tuple[str, str]]]]:
+    return _parse_excel_rows(xlsx_bytes)
+
+
+def build_batch_outputs_from_parsed(
+    parsed_scenarios: list[tuple[int, str, dict[str, str], list[tuple[str, str]]]]
+) -> tuple[bytes, bytes]:
+    scenario_runs = _execute_batch_runs_from_parsed(parsed_scenarios)
+    return _build_outputs_from_runs(scenario_runs)
 
 
 def build_batch_contract_json_bytes(xlsx_bytes: bytes) -> bytes:

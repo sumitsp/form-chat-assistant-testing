@@ -47,7 +47,7 @@ jobs:
             }
             git fetch origin main
             git reset --hard origin/main
-            docker compose up -d --build form-chat-assistant
+            docker compose -f docker-compose.yml up -d --build form-chat-assistant-testing
           "
 
       - name: Health check
@@ -55,7 +55,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS "http://$DEPLOY_HOST:8082/api/health" >/dev/null; then
+            if curl -fsS "http://$DEPLOY_HOST:3020/api/health" >/dev/null; then
               echo "Health check passed"
               exit 0
             fi

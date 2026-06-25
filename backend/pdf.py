@@ -80,6 +80,7 @@ class ScenarioPdfNearMiss(BaseModel):
 class ScenarioPdfRequest(BaseModel):
     profile_sections: list[ProfileSection] = Field(default_factory=list)
     programs: list[ScenarioPdfProgramItem] = Field(default_factory=list)
+    loanpass_programs: list[ScenarioPdfProgramItem] = Field(default_factory=list)
     rejected_programs: list[ScenarioPdfRejectedItem] = Field(default_factory=list)
     near_misses: list[ScenarioPdfNearMiss] = Field(default_factory=list)
     scenario_description: str = ""
@@ -473,10 +474,10 @@ class _PdfCanvas:
         self.y += 14
 
     def profile_sections(self, sections: list[ProfileSection]) -> None:
-        label_w = 104
+        label_w = 170
         gutter = 16
         pair_w = (self.content_w - gutter) / 2
-        value_w = pair_w - label_w - 4
+        value_w = pair_w - label_w - 8
         col_x = (_MARGIN, _MARGIN + pair_w + gutter)
         line_h = 11
 
@@ -488,22 +489,26 @@ class _PdfCanvas:
             i = 0
             while i < len(rows):
                 pair = rows[i : i + 2]
-                # Pre-wrap each value; the row grows to fit the taller column (no clipping).
-                wrapped = [self._wrap_lines(_safe_text(r.value) or "-", value_w, 9) for r in pair]
-                row_h = max(16.0, max(len(w) for w in wrapped) * line_h + 5)
+                label_wrapped = [self._wrap_lines(_safe_text(r.label), label_w - 4, 8.2) for r in pair]
+                value_wrapped = [self._wrap_lines(_safe_text(r.value) or "-", value_w, 9) for r in pair]
+                row_h = max(
+                    16.0,
+                    max(max(len(l), len(v)) for l, v in zip(label_wrapped, value_wrapped)) * line_h + 5,
+                )
                 self.ensure(row_h)
                 row_y = self.y
                 for col, r in enumerate(pair):
                     lx = col_x[col]
                     vx = lx + label_w
-                    self.page.insert_text(
-                        (lx, row_y + 10), _safe_text(r.label), fontsize=8.5, fontname="helv", color=_MUTED
-                    )
-                    # Draw value line-by-line (insert_textbox drops text that overflows its box).
-                    yy = row_y + 10
-                    for line in wrapped[col]:
-                        self.page.insert_text((vx, yy), line, fontsize=9, fontname="helv", color=_TEXT)
-                        yy += line_h
+                    # Draw label/value line-by-line so long question text never overlaps values.
+                    yy_label = row_y + 10
+                    for line in label_wrapped[col]:
+                        self.page.insert_text((lx, yy_label), line, fontsize=8.2, fontname="helv", color=_MUTED)
+                        yy_label += line_h
+                    yy_value = row_y + 10
+                    for line in value_wrapped[col]:
+                        self.page.insert_text((vx, yy_value), line, fontsize=9, fontname="helv", color=_TEXT)
+                        yy_value += line_h
                 self.y = row_y + row_h
                 i += 2
             self.gap(4)
@@ -614,6 +619,10 @@ def _render_pdf(body: ScenarioPdfRequest, generated_date: str) -> bytes:
         cv.programs_table(body.programs)
     else:
         cv.textbox(_MARGIN, cv.content_w, "No matched programs.", fontsize=9, color=_MUTED)
+
+    if body.loanpass_programs:
+        cv.section_title("LoanPASS Passed Programs", new_page=True)
+        cv.programs_table(body.loanpass_programs)
 
     if body.rejected_programs:
         cv.section_title("Rejected Programs", new_page=True)
